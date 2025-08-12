@@ -1,0 +1,15 @@
+{
+    "flutter": {
+        "platforms": {
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "jarlen-modas",
+                    "configurations": {
+                        "web": "1:666930471446:web:de517b5dfe22400aaf0b37",
+                        "windows": "1:666930471446:web:d738e33b18ad6c2eaf0b37"
+                    }
+                }
+            }
+        }
+    }
+}
