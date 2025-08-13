@@ -50,7 +50,9 @@ class _ClientPageContentState extends State<ClientPageContent> {
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                 onPressed: () {
-                  _deleteClient(rendererContext.row.cells['cod']!.value as int);
+                  _deleteClient(
+                    rendererContext.row.cells['cpfCliente']!.value as int,
+                  );
                 },
               ),
             ],

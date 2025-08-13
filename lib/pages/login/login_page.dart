@@ -5,6 +5,7 @@ import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/services/user/user_service.dart';
 import 'package:jarlenmodas/utils/auth_exception.dart';
 import 'package:jarlenmodas/utils/loading_util.dart';
+import 'package:reactive_forms/reactive_forms.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,24 +16,23 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> {
   bool _isObscure = true;
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _userService = UserService();
 
+  final FormGroup form = FormGroup({
+    'email': FormControl<String>(
+      validators: [Validators.required, Validators.email],
+    ),
+    'password': FormControl<String>(validators: [Validators.required]),
+  });
+
   Future<void> _login() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    context.goNamed('home');
-
-    if (email.isEmpty || password.isEmpty) {
-      ErroHelper.showMessage(
-        context,
-        "Preencha todos os campos!",
-        isError: true,
-      );
+    if (!form.valid) {
+      form.markAllAsTouched();
       return;
     }
+
+    final email = form.control('email').value.trim();
+    final password = form.control('password').value.trim();
 
     LoadingUtil.showLoading(context);
     try {
@@ -69,6 +69,7 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
+  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,44 +108,63 @@ class LoginPageState extends State<LoginPage> {
                     height: 100,
                   ),
                   const SizedBox(height: 24.0),
-                  TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'E-mail',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16.0),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _isObscure,
-                    decoration: InputDecoration(
-                      labelText: 'Senha',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isObscure ? Icons.visibility_off : Icons.visibility,
+                  ReactiveForm(
+                    formGroup: form,
+                    child: Column(
+                      children: <Widget>[
+                        ReactiveTextField<String>(
+                          formControlName: 'email',
+                          decoration: const InputDecoration(
+                            labelText: 'E-mail',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validationMessages: {
+                            ValidationMessage.required: (error) =>
+                                'E-mail é obrigatório',
+                            ValidationMessage.email: (error) =>
+                                'Informe um e-mail válido',
+                          },
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _isObscure = !_isObscure;
-                          });
-                        },
-                      ),
+                        const SizedBox(height: 16.0),
+                        ReactiveTextField<String>(
+                          formControlName: 'password',
+                          obscureText: _isObscure,
+                          decoration: InputDecoration(
+                            labelText: 'Senha',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isObscure
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isObscure = !_isObscure;
+                                });
+                              },
+                            ),
+                          ),
+                          validationMessages: {
+                            ValidationMessage.required: (error) =>
+                                'Senha é obrigatória',
+                          },
+                        ),
+                        const SizedBox(height: 24.0),
+                        ElevatedButton(
+                          onPressed: _login,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 16,
+                            ),
+                            textStyle: const TextStyle(fontSize: 18),
+                          ),
+                          child: const Text('Login'),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 24.0),
-                  ElevatedButton(
-                    onPressed: _login,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
-                      ),
-                      textStyle: const TextStyle(fontSize: 18),
-                    ),
-                    child: const Text('Login'),
                   ),
                 ],
               ),
