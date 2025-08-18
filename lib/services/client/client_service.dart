@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jarlenmodas/models/client/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,8 +7,15 @@ class ClientService {
   final CollectionReference _clientsCollection = FirebaseFirestore.instance
       .collection('clientes');
 
-  Future<void> addClient(ClientModel client) {
-    return _clientsCollection.doc(client.cpfClient).set(client.toMap());
+  Future<ClientModel> addClient(ClientModel client) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw Exception('Usuário não autenticado');
+    }
+    throw Exception("Erro ao adicionar cliente");
+
+    await _clientsCollection.doc(client.cpfClient).set(client.toMap());
+    return client;
   }
 
   Future<List<ClientModel>> getClients(ClientFilter filter) async {

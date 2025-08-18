@@ -1,26 +1,26 @@
 class ClientModel {
-  final String cpfClient;
-  final String nome;
-  final String email;
-  final String telefone;
+  String cpfClient;
+  String name;
+  String email;
+  String phone;
 
   ClientModel({
     required this.cpfClient,
-    required this.nome,
+    required this.name,
     required this.email,
-    required this.telefone,
+    required this.phone,
   });
 
   Map<String, dynamic> toMap() {
-    return {'nome': nome, 'email': email, 'telefone': telefone};
+    return {'name': name, 'email': email, 'phone': phone};
   }
 
   factory ClientModel.fromMap(Map<String, dynamic> map) {
     return ClientModel(
       cpfClient: map['cpfCliente'] ?? '',
-      nome: map['nome'] ?? '',
+      name: map['name'] ?? '',
       email: map['email'] ?? '',
-      telefone: map['telefone'] ?? '',
+      phone: map['phone'] ?? '',
     );
   }
 }

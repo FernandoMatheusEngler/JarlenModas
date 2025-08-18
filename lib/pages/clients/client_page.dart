@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jarlenmodas/core/error_helper.dart';
+import 'package:jarlenmodas/cubits/client/client_cubit.dart';
+import 'package:jarlenmodas/models/client/client_model.dart';
 import 'package:jarlenmodas/pages/clients/client_page_frm/client_page_frm.dart';
+import 'package:jarlenmodas/services/client/client_service.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:jarlenmodas/widgets/layout_controller/layout_widget.dart';
 
@@ -8,7 +13,17 @@ class ClientScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutWidget(content: const ClientPageContent());
+    return BlocProvider(
+      create: (_) => ClientPageCubit(ClientService()),
+      child: BlocListener<ClientPageCubit, ClientState>(
+        listener: (context, state) {
+          if (state.error.isNotEmpty) {
+            ErrorHelper.showMessage(context, state.error, isError: true);
+          }
+        },
+        child: LayoutWidget(content: const ClientPageContent()),
+      ),
+    );
   }
 }
 
@@ -23,6 +38,8 @@ class _ClientPageContentState extends State<ClientPageContent> {
   late final List<PlutoColumn> columns;
   late final List<PlutoRow> rows;
   late PlutoGridStateManager stateManager;
+
+  final ClientPageCubit cubit = ClientPageCubit(ClientService());
 
   @override
   void initState() {
@@ -43,7 +60,13 @@ class _ClientPageContentState extends State<ClientPageContent> {
                 onPressed: () {
                   _openClientForm(
                     context,
-                    rendererContext.row.cells['cpfCliente']!.value as int,
+                    client: ClientModel(
+                      cpfClient: rendererContext.row.cells['cpfCliente']!.value
+                          .toString(),
+                      name: rendererContext.row.cells['nome']!.value,
+                      email: rendererContext.row.cells['email']!.value,
+                      phone: rendererContext.row.cells['telefone']!.value,
+                    ),
                   );
                 },
               ),
@@ -116,24 +139,28 @@ class _ClientPageContentState extends State<ClientPageContent> {
     ];
   }
 
-  void _openClientForm(BuildContext context, int cpfCliente) {
+  void _openClientForm(BuildContext context, {ClientModel? client}) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ClientPageFrmContent(cpfCliente: cpfCliente),
+        builder: (context) => ClientPageFrm(onSaved: onSaved, client: client),
       ),
     );
   }
 
   void _deleteClient(int cod) {
     setState(() {
-      rows.removeWhere((row) => row.cells['cod']!.value == cod);
+      rows.removeWhere((row) => row.cells['cpfCliente']!.value == cod);
     });
   }
 
   void _refreshList() {
     debugPrint('Atualizando a lista de clientes...');
     // Chame sua API ou fonte de dados real aqui.
+  }
+
+  void onSaved(String cpfCliente) {
+    _refreshList();
   }
 
   @override
@@ -150,7 +177,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
             const SizedBox(width: 10),
             ElevatedButton.icon(
               onPressed: () {
-                _openClientForm(context, 0);
+                _openClientForm(context, client: null);
               },
               icon: const Icon(Icons.add),
               label: const Text('Adicionar'),
