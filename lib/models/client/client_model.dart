@@ -12,7 +12,12 @@ class ClientModel {
   });
 
   Map<String, dynamic> toMap() {
-    return {'name': name, 'email': email, 'phone': phone};
+    return {
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'cpfCliente': cpfClient,
+    };
   }
 
   factory ClientModel.fromMap(Map<String, dynamic> map) {

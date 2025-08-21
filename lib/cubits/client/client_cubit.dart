@@ -3,18 +3,18 @@ import 'package:jarlenmodas/models/client/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
 
-class ClientPageCubit extends Cubit<ClientState> {
+class ClientPageCubit extends Cubit<ClientPageState> {
   final ClientService service;
-  ClientPageCubit(this.service) : super(ClientState(clients: []));
+  ClientPageCubit(this.service) : super(ClientPageState(clients: []));
 
   Future<void> load(ClientFilter filter) async {
     try {
-      emit(ClientState(clients: [], loading: true));
+      emit(ClientPageState(clients: [], loading: true));
       List<ClientModel> clients = await service.getClients(filter);
-      emit(ClientState(clients: clients, loaded: true));
+      emit(ClientPageState(clients: clients, loaded: true));
     } catch (ex) {
       emit(
-        ClientState(
+        ClientPageState(
           clients: state.clients,
           loaded: false,
           error: ex.toString(),
@@ -23,13 +23,13 @@ class ClientPageCubit extends Cubit<ClientState> {
     }
   }
 
-  Future<void> delete(ClientModel client) async {
+  Future<void> delete(String cpfClient) async {
     try {
-      await service.deleteClient(client.cpfClient);
-      emit(ClientState(clients: state.clients, loaded: true));
+      await service.deleteClient(cpfClient);
+      emit(ClientPageState(clients: state.clients, loaded: true));
     } catch (ex) {
       emit(
-        ClientState(
+        ClientPageState(
           clients: state.clients,
           loaded: false,
           error: ex.toString(),
@@ -39,13 +39,13 @@ class ClientPageCubit extends Cubit<ClientState> {
   }
 }
 
-class ClientState {
+class ClientPageState {
   final List<ClientModel> clients;
   bool loading;
   bool loaded;
   String error;
 
-  ClientState({
+  ClientPageState({
     required this.clients,
     this.loading = false,
     this.loaded = false,

@@ -12,7 +12,6 @@ class ClientService {
     if (user == null) {
       throw Exception('Usuário não autenticado');
     }
-    throw Exception("Erro ao adicionar cliente");
 
     await _clientsCollection.doc(client.cpfClient).set(client.toMap());
     return client;

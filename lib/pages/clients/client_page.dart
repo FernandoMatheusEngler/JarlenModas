@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit.dart';
+import 'package:jarlenmodas/models/client/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model.dart';
 import 'package:jarlenmodas/pages/clients/client_page_frm/client_page_frm.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
+import 'package:jarlenmodas/widgets/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:jarlenmodas/widgets/layout_controller/layout_widget.dart';
 
@@ -15,7 +17,7 @@ class ClientScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ClientPageCubit(ClientService()),
-      child: BlocListener<ClientPageCubit, ClientState>(
+      child: BlocListener<ClientPageCubit, ClientPageState>(
         listener: (context, state) {
           if (state.error.isNotEmpty) {
             ErrorHelper.showMessage(context, state.error, isError: true);
@@ -74,7 +76,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
                 icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                 onPressed: () {
                   _deleteClient(
-                    rendererContext.row.cells['cpfCliente']!.value as int,
+                    rendererContext.row.cells['cpfCliente']!.value as String,
                   );
                 },
               ),
@@ -107,36 +109,8 @@ class _ClientPageContentState extends State<ClientPageContent> {
         type: PlutoColumnType.text(),
         readOnly: true,
       ),
-      PlutoColumn(
-        title: 'Status',
-        field: 'status',
-        type: PlutoColumnType.text(),
-        readOnly: true,
-      ),
     ];
-
-    rows = [
-      PlutoRow(
-        cells: {
-          'acoes': PlutoCell(value: ''),
-          'cpfCliente': PlutoCell(value: 1),
-          'nome': PlutoCell(value: 'Cliente A'),
-          'email': PlutoCell(value: 'clientea@example.com'),
-          'telefone': PlutoCell(value: '(11) 91234-5678'),
-          'status': PlutoCell(value: 'Ativo'),
-        },
-      ),
-      PlutoRow(
-        cells: {
-          'acoes': PlutoCell(value: ''),
-          'cpfCliente': PlutoCell(value: 2),
-          'nome': PlutoCell(value: 'Cliente B'),
-          'email': PlutoCell(value: 'clienteb@example.com'),
-          'telefone': PlutoCell(value: '(11) 91234-5678'),
-          'status': PlutoCell(value: 'Inativo'),
-        },
-      ),
-    ];
+    cubit.load(ClientFilter());
   }
 
   void _openClientForm(BuildContext context, {ClientModel? client}) {
@@ -148,19 +122,61 @@ class _ClientPageContentState extends State<ClientPageContent> {
     );
   }
 
-  void _deleteClient(int cod) {
-    setState(() {
-      rows.removeWhere((row) => row.cells['cpfCliente']!.value == cod);
-    });
+  void _deleteClient(String cpfCliente) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Confirmação'),
+          content: const Text('Deseja realmente excluir este cliente?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      await cubit.delete(cpfCliente);
+      _refreshList();
+    }
   }
 
   void _refreshList() {
-    debugPrint('Atualizando a lista de clientes...');
-    // Chame sua API ou fonte de dados real aqui.
+    cubit.load(ClientFilter());
   }
 
   void onSaved(String cpfCliente) {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacementNamed(context, 'home');
+    }
     _refreshList();
+  }
+
+  List<PlutoRow> clientsToRows(List<ClientModel> clients) {
+    return clients
+        .map(
+          (client) => PlutoRow(
+            cells: {
+              'acoes': PlutoCell(value: ''),
+              'cpfCliente': PlutoCell(value: client.cpfClient),
+              'nome': PlutoCell(value: client.name),
+              'email': PlutoCell(value: client.email),
+              'telefone': PlutoCell(value: client.phone),
+            },
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -185,23 +201,30 @@ class _ClientPageContentState extends State<ClientPageContent> {
           ],
         ),
         const SizedBox(height: 10),
-        Expanded(
-          child: PlutoGrid(
-            columns: columns,
-            rows: rows,
-            onLoaded: (event) {
-              stateManager = event.stateManager;
-              stateManager.setShowColumnFilter(
-                true,
-              ); // ativa filtros por coluna
-            },
-            onChanged: (event) {
-              debugPrint(
-                'Alteração na célula: ${event.row.key}, valor: ${event.value}',
-              );
-            },
-            configuration: const PlutoGridConfiguration(),
-          ),
+        BlocBuilder<ClientPageCubit, ClientPageState>(
+          bloc: cubit,
+          builder: (context, state) {
+            if (state.loading) {
+              return const Center(child: LoadingWidget());
+            }
+
+            return Expanded(
+              child: PlutoGrid(
+                columns: columns,
+                rows: clientsToRows(state.clients),
+                onLoaded: (event) {
+                  stateManager = event.stateManager;
+                  stateManager.setShowColumnFilter(true);
+                },
+                onChanged: (event) {
+                  debugPrint(
+                    'Alteração na célula: ${event.row.key}, valor: ${event.value}',
+                  );
+                },
+                configuration: const PlutoGridConfiguration(),
+              ),
+            );
+          },
         ),
       ],
     );

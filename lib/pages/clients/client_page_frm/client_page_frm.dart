@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit_frm/client_cubit_frm.dart';
 import 'package:jarlenmodas/models/client/client_model.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
@@ -70,101 +71,109 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
     return BlocBuilder<ClientPageFrmCubit, ClientPageFrmState>(
       bloc: cubit,
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(
-              widget.client == null
-                  ? 'Cadastrar Cliente'
-                  : 'Editar Cliente ${widget.client!.cpfClient}',
+        return BlocListener<ClientPageFrmCubit, ClientPageFrmState>(
+          bloc: cubit,
+          listener: (context, state) {
+            if (state.error.isNotEmpty) {
+              ErrorHelper.showMessage(context, state.error, isError: true);
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(
+                widget.client == null
+                    ? 'Cadastrar Cliente'
+                    : 'Editar Cliente ${widget.client!.cpfClient}',
+              ),
             ),
-          ),
-          body: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ReactiveForm(
-                formGroup: form,
-                child: Column(
-                  children: <Widget>[
-                    // CPF Field
-                    ReactiveTextField<String>(
-                      formControlName: 'cpfClient',
-                      decoration: const InputDecoration(
-                        labelText: 'CPF do Cliente',
-                        hintText: '___.___.___-__',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [_cpfFormatter],
-                      validationMessages: {
-                        ValidationMessage.required: (error) =>
-                            'CPF é obrigatório',
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-
-                    // Name Field
-                    ReactiveTextField<String>(
-                      formControlName: 'name',
-                      decoration: const InputDecoration(
-                        labelText: 'Nome',
-                        border: OutlineInputBorder(),
-                      ),
-                      validationMessages: {
-                        ValidationMessage.required: (error) =>
-                            'Nome é obrigatório',
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-
-                    // Email Field
-                    ReactiveTextField<String>(
-                      formControlName: 'email',
-                      decoration: const InputDecoration(
-                        labelText: 'E-mail',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      validationMessages: {
-                        ValidationMessage.required: (error) =>
-                            'E-mail é obrigatório',
-                        ValidationMessage.email: (error) =>
-                            'Informe um e-mail válido',
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-
-                    // Phone Field
-                    ReactiveTextField<String>(
-                      formControlName: 'phone',
-                      decoration: const InputDecoration(
-                        labelText: 'Telefone Celular',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validationMessages: {
-                        ValidationMessage.required: (error) =>
-                            'Telefone é obrigatório',
-                      },
-                      inputFormatters: [_phoneFormatter],
-                    ),
-                    const SizedBox(height: 24.0),
-                    // Submit Button
-                    Row(
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () => _cancelEdition(context),
-                          icon: const Icon(Icons.cancel),
-                          label: const Text('Cancelar'),
+            body: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ReactiveForm(
+                  formGroup: form,
+                  child: Column(
+                    children: <Widget>[
+                      // CPF Field
+                      ReactiveTextField<String>(
+                        formControlName: 'cpfClient',
+                        decoration: const InputDecoration(
+                          labelText: 'CPF do Cliente',
+                          hintText: '___.___.___-__',
+                          border: OutlineInputBorder(),
                         ),
-                        const SizedBox(width: 10),
-                        ElevatedButton.icon(
-                          onPressed: _saveClient,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Salvar'),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [_cpfFormatter],
+                        validationMessages: {
+                          ValidationMessage.required: (error) =>
+                              'CPF é obrigatório',
+                        },
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // Name Field
+                      ReactiveTextField<String>(
+                        formControlName: 'name',
+                        decoration: const InputDecoration(
+                          labelText: 'Nome',
+                          border: OutlineInputBorder(),
                         ),
-                      ],
-                    ),
-                  ],
+                        validationMessages: {
+                          ValidationMessage.required: (error) =>
+                              'Nome é obrigatório',
+                        },
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // Email Field
+                      ReactiveTextField<String>(
+                        formControlName: 'email',
+                        decoration: const InputDecoration(
+                          labelText: 'E-mail',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        validationMessages: {
+                          ValidationMessage.required: (error) =>
+                              'E-mail é obrigatório',
+                          ValidationMessage.email: (error) =>
+                              'Informe um e-mail válido',
+                        },
+                      ),
+                      const SizedBox(height: 16.0),
+
+                      // Phone Field
+                      ReactiveTextField<String>(
+                        formControlName: 'phone',
+                        decoration: const InputDecoration(
+                          labelText: 'Telefone Celular',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        validationMessages: {
+                          ValidationMessage.required: (error) =>
+                              'Telefone é obrigatório',
+                        },
+                        inputFormatters: [_phoneFormatter],
+                      ),
+                      const SizedBox(height: 24.0),
+                      // Submit Button
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => _cancelEdition(context),
+                            icon: const Icon(Icons.cancel),
+                            label: const Text('Cancelar'),
+                          ),
+                          const SizedBox(width: 10),
+                          ElevatedButton.icon(
+                            onPressed: _saveClient,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Salvar'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
