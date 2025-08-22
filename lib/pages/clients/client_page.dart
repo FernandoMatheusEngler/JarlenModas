@@ -155,11 +155,8 @@ class _ClientPageContentState extends State<ClientPageContent> {
   }
 
   void onSaved(String cpfClient) {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    } else {
-      Navigator.pushReplacementNamed(context, 'home');
-    }
+    Navigator.pop(context);
+    ErrorHelper.showMessage(context, "Cliente salvo com sucesso!");
     _refreshList();
   }
 
