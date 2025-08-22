@@ -1,6 +1,6 @@
 class ClientFilter {
-  final String? nome;
-  final String? cpfCliente;
+  final String? name;
+  final String? cpfClient;
 
-  ClientFilter({this.nome, this.cpfCliente});
+  ClientFilter({this.name, this.cpfClient});
 }

@@ -20,16 +20,16 @@ class ClientService {
   Future<List<ClientModel>> getClients(ClientFilter filter) async {
     Query query = _clientsCollection;
 
-    if (filter.nome != null && filter.nome!.isNotEmpty) {
+    if (filter.name != null && filter.name!.isNotEmpty) {
       query = query.where(
         'nome',
-        isGreaterThanOrEqualTo: filter.nome,
-        isLessThan: '${filter.nome!}\uf8ff',
+        isGreaterThanOrEqualTo: filter.name,
+        isLessThan: '${filter.name!}\uf8ff',
       );
     }
 
-    if (filter.cpfCliente != null && filter.cpfCliente!.isNotEmpty) {
-      query = query.where('cpfCliente', isEqualTo: filter.cpfCliente);
+    if (filter.cpfClient != null && filter.cpfClient!.isNotEmpty) {
+      query = query.where('cpfClient', isEqualTo: filter.cpfClient);
     }
 
     QuerySnapshot snapshot = await query.get();

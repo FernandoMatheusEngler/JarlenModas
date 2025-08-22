@@ -63,7 +63,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
                   _openClientForm(
                     context,
                     client: ClientModel(
-                      cpfClient: rendererContext.row.cells['cpfCliente']!.value
+                      cpfClient: rendererContext.row.cells['cpfClient']!.value
                           .toString(),
                       name: rendererContext.row.cells['nome']!.value,
                       email: rendererContext.row.cells['email']!.value,
@@ -76,7 +76,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
                 icon: const Icon(Icons.delete, color: Colors.red, size: 20),
                 onPressed: () {
                   _deleteClient(
-                    rendererContext.row.cells['cpfCliente']!.value as String,
+                    rendererContext.row.cells['cpfClient']!.value as String,
                   );
                 },
               ),
@@ -86,7 +86,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
       ),
       PlutoColumn(
         title: 'CPF Cliente',
-        field: 'cpfCliente',
+        field: 'cpfClient',
         type: PlutoColumnType.text(),
         width: 120,
         readOnly: true,
@@ -122,7 +122,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
     );
   }
 
-  void _deleteClient(String cpfCliente) async {
+  void _deleteClient(String cpfClient) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -145,7 +145,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
     );
 
     if (confirm == true) {
-      await cubit.delete(cpfCliente);
+      await cubit.delete(cpfClient);
       _refreshList();
     }
   }
@@ -154,7 +154,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
     cubit.load(ClientFilter());
   }
 
-  void onSaved(String cpfCliente) {
+  void onSaved(String cpfClient) {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     } else {
@@ -169,7 +169,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
           (client) => PlutoRow(
             cells: {
               'acoes': PlutoCell(value: ''),
-              'cpfCliente': PlutoCell(value: client.cpfClient),
+              'cpfClient': PlutoCell(value: client.cpfClient),
               'nome': PlutoCell(value: client.name),
               'email': PlutoCell(value: client.email),
               'telefone': PlutoCell(value: client.phone),

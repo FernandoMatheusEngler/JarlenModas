@@ -6,6 +6,8 @@ import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit_frm/client_cubit_frm.dart';
 import 'package:jarlenmodas/models/client/client_model.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
+import 'package:jarlenmodas/utils/validators/custom_validators.dart';
+import 'package:jarlenmodas/utils/validators/unique_cpf_validator.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
@@ -15,26 +17,15 @@ class ClientPageFrm extends StatefulWidget {
           client ?? ClientModel(cpfClient: '', name: '', email: '', phone: '');
 
   final void Function(String) onSaved;
-  final ClientModel? client;
+  final ClientModel client;
 
   @override
   State<ClientPageFrm> createState() => _ClientPageFrmState();
 }
 
 class _ClientPageFrmState extends State<ClientPageFrm> {
-  late final ClientPageFrmCubit cubit = ClientPageFrmCubit(
-    service: ClientService(),
-    clientModel: widget.client,
-  );
-
-  final FormGroup form = FormGroup({
-    'cpfClient': FormControl<String>(validators: [Validators.required]),
-    'name': FormControl<String>(validators: [Validators.required]),
-    'email': FormControl<String>(
-      validators: [Validators.required, Validators.email],
-    ),
-    'phone': FormControl<String>(validators: [Validators.required]),
-  });
+  late final ClientPageFrmCubit cubit;
+  late final FormGroup form;
 
   final _cpfFormatter = MaskTextInputFormatter(
     mask: '###.###.###-##',
@@ -56,14 +47,50 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
     }
   }
 
-  Future<void> _saveClient() async {
-    if (!form.valid || widget.client == null) return;
-    widget.client!.cpfClient = form.control('cpfClient').value;
-    widget.client!.name = form.control('name').value;
-    widget.client!.email = form.control('email').value;
-    widget.client!.phone = form.control('phone').value;
+  @override
+  void initState() {
+    super.initState();
 
-    cubit.save(widget.client!, widget.onSaved);
+    final clientService = ClientService();
+
+    cubit = ClientPageFrmCubit(
+      service: clientService,
+      clientModel: widget.client,
+    );
+
+    form = FormGroup({
+      'cpfClient': FormControl<String>(
+        value: widget.client.cpfClient,
+        validators: [
+          Validators.required,
+          Validators.delegate(CustomValidators.validCpf),
+        ],
+        asyncValidators: widget.client.cpfClient.isEmpty
+            ? [UniqueCpfAsyncValidator()]
+            : [],
+      ),
+      'name': FormControl<String>(
+        value: widget.client.name,
+        validators: [Validators.required],
+      ),
+      'email': FormControl<String>(
+        value: widget.client.email,
+        validators: [Validators.required, Validators.email],
+      ),
+      'phone': FormControl<String>(
+        value: widget.client.phone,
+        validators: [Validators.required],
+      ),
+    });
+  }
+
+  Future<void> _saveClient() async {
+    widget.client.cpfClient = form.control('cpfClient').value;
+    widget.client.name = form.control('name').value;
+    widget.client.email = form.control('email').value;
+    widget.client.phone = form.control('phone').value;
+
+    cubit.save(widget.client, widget.onSaved);
   }
 
   @override
@@ -81,9 +108,9 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
           child: Scaffold(
             appBar: AppBar(
               title: Text(
-                widget.client == null
+                widget.client.cpfClient.isEmpty
                     ? 'Cadastrar Cliente'
-                    : 'Editar Cliente ${widget.client!.cpfClient}',
+                    : 'Editar Cliente ${widget.client.cpfClient}',
               ),
             ),
             body: SingleChildScrollView(
@@ -165,10 +192,14 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
                             label: const Text('Cancelar'),
                           ),
                           const SizedBox(width: 10),
-                          ElevatedButton.icon(
-                            onPressed: _saveClient,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Salvar'),
+                          ReactiveFormConsumer(
+                            builder: (context, form, child) {
+                              return ElevatedButton.icon(
+                                onPressed: form.valid ? _saveClient : null,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Salvar'),
+                              );
+                            },
                           ),
                         ],
                       ),

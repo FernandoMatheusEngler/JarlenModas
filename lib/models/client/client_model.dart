@@ -16,13 +16,13 @@ class ClientModel {
       'name': name,
       'email': email,
       'phone': phone,
-      'cpfCliente': cpfClient,
+      'cpfClient': cpfClient,
     };
   }
 
   factory ClientModel.fromMap(Map<String, dynamic> map) {
     return ClientModel(
-      cpfClient: map['cpfCliente'] ?? '',
+      cpfClient: map['cpfClient'] ?? '',
       name: map['name'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
