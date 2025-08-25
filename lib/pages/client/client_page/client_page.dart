@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
-import 'package:jarlenmodas/cubits/client/client_cubit.dart';
+import 'package:jarlenmodas/core/message_helper.dart';
+import 'package:jarlenmodas/cubits/client/client_cubit_frm/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/models/client/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model.dart';
-import 'package:jarlenmodas/pages/clients/client_page_frm/client_page_frm.dart';
+import 'package:jarlenmodas/pages/client/client_page/client_page_frm/client_page_frm.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
 import 'package:jarlenmodas/widgets/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:jarlenmodas/widgets/layout_controller/layout_widget.dart';
 
-class ClientScreen extends StatelessWidget {
-  const ClientScreen({super.key});
+class ClientPage extends StatelessWidget {
+  const ClientPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +147,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
 
     if (confirm == true) {
       await cubit.delete(cpfClient);
+      MessageHelper.showSuccessMessage('Cliente excluído com sucesso!');
       _refreshList();
     }
   }
@@ -156,7 +158,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
 
   void onSaved(String cpfClient) {
     Navigator.pop(context);
-    ErrorHelper.showMessage(context, "Cliente salvo com sucesso!");
+    MessageHelper.showSuccessMessage('Cliente salvo com sucesso!');
     _refreshList();
   }
 
