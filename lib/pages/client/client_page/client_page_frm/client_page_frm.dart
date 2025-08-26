@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
-import 'package:jarlenmodas/cubits/client/client_cubit_frm/client_cubit_frm.dart';
+import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit_frm/client_cubit_frm.dart';
 import 'package:jarlenmodas/models/client/client_model.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
 import 'package:jarlenmodas/utils/validators/custom_validators.dart';

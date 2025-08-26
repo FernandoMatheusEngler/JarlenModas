@@ -1,14 +1,13 @@
 // home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:jarlenmodas/core/consts.dart';
-import 'package:jarlenmodas/widgets/layout_controller/layout_widget.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const LayoutWidget(content: HomePageContent());
+    return const HomePageContent();
   }
 }
 

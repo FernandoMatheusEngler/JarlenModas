@@ -1,6 +1,6 @@
-import 'package:jarlenmodas/models/client/client_filter.dart';
-import 'package:jarlenmodas/models/client/client_model.dart';
-import 'package:jarlenmodas/services/client/client_service.dart';
+import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
+import 'package:jarlenmodas/models/client/client_model/client_model.dart';
+import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 
 class UniqueCpfAsyncValidator extends AsyncValidator<dynamic> {

@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:jarlenmodas/models/client/client_filter.dart';
-import 'package:jarlenmodas/models/client/client_model.dart';
+import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
+import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
 
 class ClientPageCubit extends Cubit<ClientPageState> {

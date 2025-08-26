@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/core/message_helper.dart';
-import 'package:jarlenmodas/cubits/client/client_cubit_frm/client_cubit/client_cubit.dart';
-import 'package:jarlenmodas/models/client/client_filter.dart';
-import 'package:jarlenmodas/models/client/client_model.dart';
+import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
+import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
+import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/pages/client/client_page/client_page_frm/client_page_frm.dart';
 import 'package:jarlenmodas/services/client/client_service.dart';
 import 'package:jarlenmodas/widgets/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
-import 'package:jarlenmodas/widgets/layout_controller/layout_widget.dart';
 
 class ClientPage extends StatelessWidget {
   const ClientPage({super.key});
@@ -24,7 +23,7 @@ class ClientPage extends StatelessWidget {
             ErrorHelper.showMessage(context, state.error, isError: true);
           }
         },
-        child: LayoutWidget(content: const ClientPageContent()),
+        child: const ClientPageContent(),
       ),
     );
   }
@@ -41,13 +40,12 @@ class _ClientPageContentState extends State<ClientPageContent> {
   late final List<PlutoColumn> columns;
   late final List<PlutoRow> rows;
   late PlutoGridStateManager stateManager;
-
-  final ClientPageCubit cubit = ClientPageCubit(ClientService());
+  late final ClientPageCubit cubit;
 
   @override
   void initState() {
     super.initState();
-
+    cubit = context.read<ClientPageCubit>();
     columns = [
       PlutoColumn(
         title: '',

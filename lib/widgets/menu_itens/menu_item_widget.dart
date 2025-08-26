@@ -46,7 +46,9 @@ class _MenuItensWidgetState extends State<MenuItensWidget> {
         MenuItem(
           title: "Débitos Clientes",
           icon: Icons.money_off,
-          onTap: (context) {},
+          onTap: (context) {
+            context.goNamed('debit-client');
+          },
         ),
       ],
     ),
