@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:jarlenmodas/models/client/client_filter.dart';
-import 'package:jarlenmodas/models/client/client_model.dart';
+import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
+import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ClientService {
@@ -37,10 +37,6 @@ class ClientService {
     return snapshot.docs.map((doc) {
       return ClientModel.fromMap(doc.data() as Map<String, dynamic>);
     }).toList();
-  }
-
-  Future<void> updateClient(ClientModel client) {
-    return _clientsCollection.doc(client.cpfClient).update(client.toMap());
   }
 
   Future<void> deleteClient(String cpfClient) {

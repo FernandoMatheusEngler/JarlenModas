@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit_frm/client_cubit_frm.dart';
-import 'package:jarlenmodas/models/client/client_model.dart';
-import 'package:jarlenmodas/services/client/client_service.dart';
+import 'package:jarlenmodas/models/client/client_model/client_model.dart';
+import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/utils/validators/custom_validators.dart';
 import 'package:jarlenmodas/utils/validators/unique_cpf_validator.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
@@ -102,7 +102,7 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
           bloc: cubit,
           listener: (context, state) {
             if (state.error.isNotEmpty) {
-              ErrorHelper.showMessage(context, state.error, isError: true);
+              ErrorHelper.showMessage(context, state.error);
             }
           },
           child: Scaffold(

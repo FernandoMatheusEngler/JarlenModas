@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
-import 'package:jarlenmodas/services/client/client_service.dart';
+import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 
 class ClientPageCubit extends Cubit<ClientPageState> {
   final ClientService service;
@@ -11,12 +11,13 @@ class ClientPageCubit extends Cubit<ClientPageState> {
     try {
       emit(ClientPageState(clients: [], loading: true));
       List<ClientModel> clients = await service.getClients(filter);
-      emit(ClientPageState(clients: clients, loaded: true));
+      emit(ClientPageState(clients: clients, loaded: true, loading: false));
     } catch (ex) {
       emit(
         ClientPageState(
           clients: state.clients,
           loaded: false,
+          loading: false,
           error: ex.toString(),
         ),
       );

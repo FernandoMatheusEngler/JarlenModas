@@ -40,11 +40,7 @@ class LoginPageState extends State<LoginPage> {
 
       if (user == null) {
         if (mounted) {
-          ErrorHelper.showMessage(
-            context,
-            "E-mail ou senha inválidos.",
-            isError: true,
-          );
+          ErrorHelper.showMessage(context, "E-mail ou senha inválidos.");
         }
         return;
       }
@@ -55,16 +51,12 @@ class LoginPageState extends State<LoginPage> {
     } on AuthException catch (e) {
       if (mounted) {
         LoadingUtil.hideLoading(context);
-        ErrorHelper.showMessage(context, e.message, isError: true);
+        ErrorHelper.showMessage(context, e.message);
       }
     } catch (e) {
       if (mounted) {
         LoadingUtil.hideLoading(context);
-        ErrorHelper.showMessage(
-          context,
-          "Erro inesperado: ${e.toString()}",
-          isError: true,
-        );
+        ErrorHelper.showMessage(context, "Erro inesperado: ${e.toString()}");
       }
     }
   }

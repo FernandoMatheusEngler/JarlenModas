@@ -6,7 +6,7 @@ import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/pages/client/client_page/client_page_frm/client_page_frm.dart';
-import 'package:jarlenmodas/services/client/client_service.dart';
+import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/widgets/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 
@@ -20,7 +20,7 @@ class ClientPage extends StatelessWidget {
       child: BlocListener<ClientPageCubit, ClientPageState>(
         listener: (context, state) {
           if (state.error.isNotEmpty) {
-            ErrorHelper.showMessage(context, state.error, isError: true);
+            ErrorHelper.showMessage(context, state.error);
           }
         },
         child: const ClientPageContent(),
@@ -204,7 +204,6 @@ class _ClientPageContentState extends State<ClientPageContent> {
             if (state.loading) {
               return const Center(child: LoadingWidget());
             }
-
             return Expanded(
               child: PlutoGrid(
                 columns: columns,
