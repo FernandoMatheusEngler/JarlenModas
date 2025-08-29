@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
+import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
+import 'package:jarlenmodas/widgets/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 
 class DebitClientPage extends StatelessWidget {
@@ -35,11 +37,66 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
   late final List<PlutoColumn> columns;
   late final List<PlutoRow> rows;
   late PlutoGridStateManager stateManager;
-
+  late final DebitClientPageCubit cubit;
   @override
   void initState() {
     super.initState();
+    cubit = context.read<DebitClientPageCubit>();
+    columns = [
+      PlutoColumn(
+        title: '',
+        field: 'acoes',
+        type: PlutoColumnType.text(),
+        width: 120,
+        renderer: (rendererContext) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                onPressed: () {
+                  _openDebitsClientFrm();
+                },
+              ),
+            ],
+          );
+        },
+      ),
+      PlutoColumn(
+        title: 'CPF Cliente',
+        field: 'cpfClient',
+        type: PlutoColumnType.text(),
+        width: 120,
+        readOnly: true,
+      ),
+      PlutoColumn(
+        title: 'Nome Cliente',
+        field: 'nome',
+        type: PlutoColumnType.text(),
+        readOnly: true,
+      ),
+      PlutoColumn(
+        title: 'Valor Total Débito',
+        field: 'valorTotalDebito',
+        type: PlutoColumnType.number(),
+        readOnly: true,
+      ),
+    ];
   }
+
+  List<PlutoRow> debitsToRows(List<DebitClientModel> debits) {
+    return debits.map((debit) {
+      return PlutoRow(
+        cells: {
+          'cpfClient': PlutoCell(value: debit.cpfClient),
+          'nome': PlutoCell(value: ''),
+          'valorTotalDebito': PlutoCell(value: debit.value),
+        },
+      );
+    }).toList();
+  }
+
+  void _openDebitsClientFrm() {}
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +120,30 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
           ],
         ),
         const SizedBox(height: 10),
+        BlocBuilder<DebitClientPageCubit, DebitClientPageState>(
+          bloc: cubit,
+          builder: (context, state) {
+            if (state.loading) {
+              return const Center(child: LoadingWidget());
+            }
+            return Expanded(
+              child: PlutoGrid(
+                columns: columns,
+                rows: debitsToRows(state.debitClients),
+                onLoaded: (event) {
+                  stateManager = event.stateManager;
+                  stateManager.setShowColumnFilter(true);
+                },
+                onChanged: (event) {
+                  debugPrint(
+                    'Alteração na célula: ${event.row.key}, valor: ${event.value}',
+                  );
+                },
+                configuration: const PlutoGridConfiguration(),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
