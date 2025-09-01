@@ -1,0 +1,166 @@
+import 'package:flutter/material.dart';
+
+class DropDownSearchWidget<T> extends StatefulWidget {
+  const DropDownSearchWidget({
+    super.key,
+    required this.sourceList,
+    this.initialValue,
+    this.placeholder,
+    this.onChanged,
+    this.textFunction,
+    this.readOnly = false,
+  });
+
+  final List<T> sourceList;
+  final T? initialValue;
+  final String? placeholder;
+  final void Function(T? value)? onChanged;
+  final String Function(T)? textFunction;
+  final bool readOnly;
+
+  @override
+  State<DropDownSearchWidget<T>> createState() =>
+      _DropDownSearchWidgetState<T>();
+}
+
+class _DropDownSearchWidgetState<T> extends State<DropDownSearchWidget<T>> {
+  T? selectedItem;
+  final TextEditingController _searchCtrl = TextEditingController();
+  List<T> filteredItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedItem = widget.initialValue;
+    filteredItems = widget.sourceList;
+  }
+
+  void _openModal() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          void _filter(String value) {
+            setStateDialog(() {
+              filteredItems = widget.sourceList
+                  .where((item) => _getItemText(item)
+                      .toLowerCase()
+                      .contains(value.toLowerCase()))
+                  .toList();
+            });
+          }
+
+          return Dialog(
+            insetPadding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Header com título e fechar
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      widget.placeholder ?? "Selecione",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+
+                // Campo de pesquisa
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: TextField(
+                    controller: _searchCtrl,
+                    decoration: const InputDecoration(
+                      hintText: "Pesquisar...",
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: _filter,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Lista de itens
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: filteredItems.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      final isSelected = item == selectedItem;
+                      return ListTile(
+                        title: Text(_getItemText(item)),
+                        trailing: isSelected
+                            ? const Icon(Icons.check, color: Colors.blue)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            selectedItem = item;
+                            widget.onChanged?.call(item);
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  String _getItemText(T item) {
+    if (widget.textFunction != null) return widget.textFunction!(item);
+    return item.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: widget.readOnly ? null : _openModal,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade400, width: 1.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                selectedItem != null
+                    ? _getItemText(selectedItem as T)
+                    : (widget.placeholder ?? "Selecione"),
+                style: TextStyle(
+                  color: selectedItem == null ? Colors.grey : Colors.black,
+                ),
+              ),
+            ),
+            if (selectedItem != null && !widget.readOnly)
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedItem = null;
+                    widget.onChanged?.call(null);
+                  });
+                },
+                child: const Icon(Icons.close, size: 20),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jarlenmodas/components/drop_down_search_widget,dart';
 import 'package:jarlenmodas/core/error_helper.dart';
+import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
+import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
+import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart';
+import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
 import 'package:jarlenmodas/widgets/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
@@ -38,10 +43,15 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
   late final List<PlutoRow> rows;
   late PlutoGridStateManager stateManager;
   late final DebitClientPageCubit cubit;
+  late final ClientPageCubit clientCubit;
+  late final ClientFilter filter;
   @override
   void initState() {
     super.initState();
     cubit = context.read<DebitClientPageCubit>();
+    filter = ClientFilter();
+    clientCubit = ClientPageCubit(ClientService());
+    clientCubit.load(filter);
     columns = [
       PlutoColumn(
         title: '',
@@ -98,6 +108,73 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
 
   void _openDebitsClientFrm() {}
 
+  void _openFilterDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const Text(
+                  "Filtros",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+
+                const SizedBox(height: 16),
+
+                BlocBuilder<ClientPageCubit, ClientPageState>(
+                  bloc: clientCubit,
+                  builder: (context, clientState) {
+                    if (clientState.loading) {
+                      return const LoadingWidget();
+                    }
+                    List<ClientModel> depositosInsumos =
+                        clientCubit.state.clients;
+
+                    ClientModel? client = depositosInsumos
+                        .where(
+                          (element) => element.cpfClient == filter.cpfClient,
+                        )
+                        .firstOrNull;
+                    return DropDownSearchWidget<ClientModel>(
+                      textFunction: (client) => client.name,
+                      initialValue: client,
+                      sourceList: depositosInsumos,
+                      onChanged: (value) => filter.cpfClient = value?.cpfClient,
+                      placeholder: 'Cliente',
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("Cancelar"),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Confirmar filtros
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Confirmar"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -105,9 +182,9 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
         Row(
           children: [
             ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.refresh),
-              label: const Text('Atualizar'),
+              onPressed: () => _openFilterDialog(context),
+              icon: const Icon(Icons.search),
+              label: const Text('Filtrar'),
             ),
             const SizedBox(width: 10),
             ElevatedButton.icon(
