@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/components/drop_down_search_widget,dart';
+import 'package:jarlenmodas/components/filter_dialog_widget.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
@@ -48,8 +49,8 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
   @override
   void initState() {
     super.initState();
-    cubit = context.read<DebitClientPageCubit>();
     filter = ClientFilter();
+    cubit = context.read<DebitClientPageCubit>();
     clientCubit = ClientPageCubit(ClientService());
     clientCubit.load(filter);
     columns = [
@@ -108,71 +109,38 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
 
   void _openDebitsClientFrm() {}
 
-  void _openFilterDialog(BuildContext context) {
-    showDialog(
+  Future _openFilterDialog(BuildContext context) async {
+    bool? confirm = await showDialog<bool?>(
       context: context,
       builder: (context) {
-        return Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const Text(
-                  "Filtros",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 16),
-
-                BlocBuilder<ClientPageCubit, ClientPageState>(
-                  bloc: clientCubit,
-                  builder: (context, clientState) {
-                    if (clientState.loading) {
-                      return const LoadingWidget();
-                    }
-                    List<ClientModel> depositosInsumos =
-                        clientCubit.state.clients;
-
-                    ClientModel? client = depositosInsumos
-                        .where(
-                          (element) => element.cpfClient == filter.cpfClient,
-                        )
-                        .firstOrNull;
-                    return DropDownSearchWidget<ClientModel>(
-                      textFunction: (client) => client.name,
-                      initialValue: client,
-                      sourceList: depositosInsumos,
-                      onChanged: (value) => filter.cpfClient = value?.cpfClient,
-                      placeholder: 'Cliente',
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text("Cancelar"),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Confirmar filtros
-                        Navigator.pop(context);
-                      },
-                      child: const Text("Confirmar"),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        return FilterDialogWidget(
+          child: Column(
+            children: [
+              BlocBuilder<ClientPageCubit, ClientPageState>(
+                bloc: clientCubit,
+                builder: (context, clientState) {
+                  if (clientState.loading) {
+                    return const LoadingWidget();
+                  }
+                  ClientModel? client = clientCubit.state.clients
+                      .where((element) => element.cpfClient == filter.cpfClient)
+                      .firstOrNull;
+                  return DropDownSearchWidget<ClientModel>(
+                    textFunction: (client) => client.name,
+                    initialValue: client,
+                    sourceList: clientCubit.state.clients,
+                    onChanged: (value) => filter.cpfClient = value?.cpfClient,
+                    placeholder: 'Cliente',
+                  );
+                },
+              ),
+            ],
           ),
         );
       },
     );
+    if (confirm != true) return;
+    clientCubit.load(filter);
   }
 
   @override
@@ -182,7 +150,7 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
         Row(
           children: [
             ElevatedButton.icon(
-              onPressed: () => _openFilterDialog(context),
+              onPressed: () async => await _openFilterDialog(context),
               icon: const Icon(Icons.search),
               label: const Text('Filtrar'),
             ),
