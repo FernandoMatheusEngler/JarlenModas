@@ -8,6 +8,7 @@ class AppConsts {
   static const Color primaryColor = Color.fromARGB(255, 69, 111, 224);
   static const Color secondaryColor = Color.fromARGB(255, 214, 214, 214);
   static const Color primaryColorText = Colors.black;
+  static const Color primaryColorIcon = Colors.white;
   static const Color borderColor = Color(0xFF1E3A8A);
   static const String pathLogoEnterprise = 'assets/images/logo_empresa.png';
   static const String pathBackgroundImage = 'assets/images/backgroud-image.png';
@@ -24,4 +25,7 @@ class AppConsts {
     ),
     useMaterial3: true,
   );
+
+  static const double ismallIconButtonWidth = 30;
+  static const double smallButtonHeight = 30;
 }

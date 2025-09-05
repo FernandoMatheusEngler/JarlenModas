@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jarlenmodas/components/buttons/refresh_button_widget.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/core/message_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
@@ -146,18 +147,18 @@ class _ClientPageContentState extends State<ClientPageContent> {
     if (confirm == true) {
       await cubit.delete(cpfClient);
       MessageHelper.showSuccessMessage('Cliente excluído com sucesso!');
-      _refreshList();
+      refreshList();
     }
   }
 
-  void _refreshList() {
+  void refreshList() {
     cubit.load(ClientFilter());
   }
 
   void onSaved(String cpfClient) {
     Navigator.pop(context);
     MessageHelper.showSuccessMessage('Cliente salvo com sucesso!');
-    _refreshList();
+    refreshList();
   }
 
   List<PlutoRow> clientsToRows(List<ClientModel> clients) {
@@ -182,11 +183,8 @@ class _ClientPageContentState extends State<ClientPageContent> {
       children: [
         Row(
           children: [
-            ElevatedButton.icon(
-              onPressed: _refreshList,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Atualizar'),
-            ),
+            const SizedBox(width: 10),
+            RefreshButtonWidget(onPressed: refreshList),
             const SizedBox(width: 10),
             ElevatedButton.icon(
               onPressed: () {

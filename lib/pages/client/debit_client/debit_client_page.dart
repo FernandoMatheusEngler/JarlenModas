@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:jarlenmodas/components/drop_down_search_widget,dart';
+import 'package:jarlenmodas/components/buttons/refresh_button_widget.dart';
+import 'package:jarlenmodas/components/drop_down_search_widget.dart';
 import 'package:jarlenmodas/components/filter_dialog_widget.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
+import 'package:jarlenmodas/models/client/debit_client_model/debit_client_filter.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart';
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
@@ -45,14 +47,13 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
   late PlutoGridStateManager stateManager;
   late final DebitClientPageCubit cubit;
   late final ClientPageCubit clientCubit;
-  late final ClientFilter filter;
+  late final DebitClientFilter filter;
   @override
   void initState() {
     super.initState();
-    filter = ClientFilter();
+    filter = DebitClientFilter();
     cubit = context.read<DebitClientPageCubit>();
     clientCubit = ClientPageCubit(ClientService());
-    clientCubit.load(filter);
     columns = [
       PlutoColumn(
         title: '',
@@ -110,6 +111,7 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
   void _openDebitsClientFrm() {}
 
   Future _openFilterDialog(BuildContext context) async {
+    clientCubit.load(ClientFilter());
     bool? confirm = await showDialog<bool?>(
       context: context,
       builder: (context) {
@@ -140,7 +142,11 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
       },
     );
     if (confirm != true) return;
-    clientCubit.load(filter);
+    cubit.load(filter);
+  }
+
+  void refreshList() {
+    cubit.load(filter);
   }
 
   @override
@@ -149,6 +155,9 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
       children: [
         Row(
           children: [
+            const SizedBox(width: 10),
+            RefreshButtonWidget(onPressed: refreshList),
+            const SizedBox(width: 10),
             ElevatedButton.icon(
               onPressed: () async => await _openFilterDialog(context),
               icon: const Icon(Icons.search),
@@ -178,11 +187,6 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
                 onLoaded: (event) {
                   stateManager = event.stateManager;
                   stateManager.setShowColumnFilter(true);
-                },
-                onChanged: (event) {
-                  debugPrint(
-                    'Alteração na célula: ${event.row.key}, valor: ${event.value}',
-                  );
                 },
                 configuration: const PlutoGridConfiguration(),
               ),
