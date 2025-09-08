@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:jarlenmodas/components/buttons/refresh_button_widget.dart';
-import 'package:jarlenmodas/components/drop_down_search_widget.dart';
-import 'package:jarlenmodas/components/filter_dialog_widget.dart';
+import 'package:jarlenmodas/components/drop_down/drop_down_search_widget.dart';
+import 'package:jarlenmodas/components/buttons/filter_dialog_widget.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
