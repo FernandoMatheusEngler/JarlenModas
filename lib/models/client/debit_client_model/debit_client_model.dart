@@ -3,7 +3,6 @@ import 'dart:typed_data';
 class DebitClientModel {
   String id;
   String cpfClient;
-  // PaymentMethodType paymentMethod;
   double value;
   String dueDate;
   DateTime? dataCreation;
@@ -12,7 +11,6 @@ class DebitClientModel {
   DebitClientModel({
     required this.id,
     required this.cpfClient,
-    // required this.paymentMethod,
     required this.value,
     required this.dueDate,
     required this.dataCreation,
@@ -23,7 +21,6 @@ class DebitClientModel {
     return {
       'id': id,
       'cpfClient': cpfClient,
-      // 'paymentMethod': paymentMethod.name,
       'value': value,
       'dueDate': dueDate,
       'dataCreation': dataCreation?.toIso8601String(),
@@ -35,7 +32,6 @@ class DebitClientModel {
     return DebitClientModel(
       id: map['id'] ?? '',
       cpfClient: map['cpfClient'] ?? '',
-      // paymentMethod: _stringToPaymentMethodType(map['paymentMethod'] ?? ''),
       value: (map['value'] ?? 0.0).toDouble(),
       dueDate: map['dueDate'] ?? '',
       dataCreation: map['dataCreation'] != null
@@ -46,21 +42,6 @@ class DebitClientModel {
           : null,
     );
   }
-
-  // static PaymentMethodType _stringToPaymentMethodType(String? methodName) {
-  //   switch (methodName) {
-  //     case 'Cartão de Crédito':
-  //       return PaymentMethodType.creditCard;
-  //     case 'Cartão de Débito':
-  //       return PaymentMethodType.debitCard;
-  //     case 'Pix':
-  //       return PaymentMethodType.pix;
-  //     case 'Dinheiro':
-  //       return PaymentMethodType.cash;
-  //     default:
-  //       return PaymentMethodType.other;
-  //   }
-  // }
 }
 
 enum PaymentMethodType { creditCard, debitCard, pix, cash, other }

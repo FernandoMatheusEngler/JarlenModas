@@ -13,8 +13,7 @@ import 'package:reactive_forms/reactive_forms.dart';
 
 class ClientPageFrm extends StatefulWidget {
   ClientPageFrm({super.key, ClientModel? client, required this.onSaved})
-    : client =
-          client ?? ClientModel(cpfClient: '', name: '', email: '', phone: '');
+    : client = client ?? ClientModel(cpfClient: '', name: '', phone: '');
 
   final void Function(String) onSaved;
   final ClientModel client;
@@ -73,10 +72,6 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
         value: widget.client.name,
         validators: [Validators.required],
       ),
-      'email': FormControl<String>(
-        value: widget.client.email,
-        validators: [Validators.required, Validators.email],
-      ),
       'phone': FormControl<String>(
         value: widget.client.phone,
         validators: [Validators.required],
@@ -87,7 +82,6 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
   Future<void> _saveClient() async {
     widget.client.cpfClient = form.control('cpfClient').value;
     widget.client.name = form.control('name').value;
-    widget.client.email = form.control('email').value;
     widget.client.phone = form.control('phone').value;
 
     cubit.save(widget.client, widget.onSaved);
@@ -147,23 +141,6 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
                         validationMessages: {
                           ValidationMessage.required: (error) =>
                               'Nome é obrigatório',
-                        },
-                      ),
-                      const SizedBox(height: 16.0),
-
-                      // Email Field
-                      ReactiveTextField<String>(
-                        formControlName: 'email',
-                        decoration: const InputDecoration(
-                          labelText: 'E-mail',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        validationMessages: {
-                          ValidationMessage.required: (error) =>
-                              'E-mail é obrigatório',
-                          ValidationMessage.email: (error) =>
-                              'Informe um e-mail válido',
                         },
                       ),
                       const SizedBox(height: 16.0),

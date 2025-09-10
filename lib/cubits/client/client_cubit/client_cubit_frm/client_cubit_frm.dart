@@ -14,7 +14,6 @@ class ClientPageFrmCubit extends Cubit<ClientPageFrmState> {
       emit(
         ClientPageFrmState(
           message: 'Cliente salvo com sucesso!',
-          saved: true,
           client: clientSaved,
         ),
       );
@@ -27,14 +26,12 @@ class ClientPageFrmCubit extends Cubit<ClientPageFrmState> {
 
 class ClientPageFrmState {
   final String error;
-  final bool saved;
   final String message;
   final ClientModel? client;
 
   ClientPageFrmState({
     required this.client,
     this.error = '',
-    this.saved = false,
     this.message = '',
   });
 }

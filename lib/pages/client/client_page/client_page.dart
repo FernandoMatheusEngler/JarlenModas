@@ -66,7 +66,6 @@ class _ClientPageContentState extends State<ClientPageContent> {
                       cpfClient: rendererContext.row.cells['cpfClient']!.value
                           .toString(),
                       name: rendererContext.row.cells['nome']!.value,
-                      email: rendererContext.row.cells['email']!.value,
                       phone: rendererContext.row.cells['telefone']!.value,
                     ),
                   );
@@ -94,12 +93,6 @@ class _ClientPageContentState extends State<ClientPageContent> {
       PlutoColumn(
         title: 'Nome',
         field: 'nome',
-        type: PlutoColumnType.text(),
-        readOnly: true,
-      ),
-      PlutoColumn(
-        title: 'E-mail',
-        field: 'email',
         type: PlutoColumnType.text(),
         readOnly: true,
       ),
@@ -169,7 +162,6 @@ class _ClientPageContentState extends State<ClientPageContent> {
               'acoes': PlutoCell(value: ''),
               'cpfClient': PlutoCell(value: client.cpfClient),
               'nome': PlutoCell(value: client.name),
-              'email': PlutoCell(value: client.email),
               'telefone': PlutoCell(value: client.phone),
             },
           ),

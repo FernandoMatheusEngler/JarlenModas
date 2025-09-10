@@ -1,6 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:jarlenmodas/pages/client/client_page/client_page.dart';
-import 'package:jarlenmodas/pages/client/debit_client/debit_client_page.dart';
+import 'package:jarlenmodas/pages/client/debit_client_page/debit_client_page.dart';
 import 'package:jarlenmodas/pages/home/home_page.dart';
 import 'package:jarlenmodas/pages/login/login_page.dart';
 import 'package:jarlenmodas/widgets/layout_controller/layout_widget.dart';

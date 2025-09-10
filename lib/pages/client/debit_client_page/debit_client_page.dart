@@ -10,6 +10,7 @@ import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_filter.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart';
+import 'package:jarlenmodas/pages/client/debit_client_page/debit_client_page_frm.dart/debit_client_page_frm.dart';
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
 import 'package:jarlenmodas/widgets/loading_widget.dart';
@@ -67,7 +68,9 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
               IconButton(
                 icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
                 onPressed: () {
-                  _openDebitsClientFrm();
+                  _openDebitsClientFrm(
+                    rendererContext.row.cells['cpfClient']!.value,
+                  );
                 },
               ),
             ],
@@ -108,7 +111,14 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
     }).toList();
   }
 
-  void _openDebitsClientFrm() {}
+  void _openDebitsClientFrm(String? cpfCliente) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DebitClientPageFrm(cpfCliente: cpfCliente),
+      ),
+    );
+  }
 
   Future _openFilterDialog(BuildContext context) async {
     clientCubit.load(ClientFilter());
@@ -166,7 +176,7 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
             const SizedBox(width: 10),
             ElevatedButton.icon(
               onPressed: () {
-                // _openClientForm(context, client: null);
+                _openDebitsClientFrm(null);
               },
               icon: const Icon(Icons.add),
               label: const Text('Adicionar'),
