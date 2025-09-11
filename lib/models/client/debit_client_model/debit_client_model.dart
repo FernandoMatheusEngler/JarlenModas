@@ -43,5 +43,3 @@ class DebitClientModel {
     );
   }
 }
-
-enum PaymentMethodType { creditCard, debitCard, pix, cash, other }

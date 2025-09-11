@@ -38,14 +38,6 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
     type: MaskAutoCompletionType.lazy,
   );
 
-  Future<void> _cancelEdition(BuildContext context) async {
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    } else {
-      Navigator.pushReplacementNamed(context, 'home');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -77,6 +69,14 @@ class _ClientPageFrmState extends State<ClientPageFrm> {
         validators: [Validators.required],
       ),
     });
+  }
+
+  Future<void> _cancelEdition(BuildContext context) async {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacementNamed(context, 'home');
+    }
   }
 
   Future<void> _saveClient() async {
