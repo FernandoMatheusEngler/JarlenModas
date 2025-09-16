@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jarlenmodas/core/consts.dart';
-import 'package:jarlenmodas/widgets/exit_button_widget.dart';
+import 'package:jarlenmodas/components/buttons/exit_button_widget.dart';
 
 class MenuItem {
   final String title;

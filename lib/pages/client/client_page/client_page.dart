@@ -8,7 +8,7 @@ import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/pages/client/client_page/client_page_frm/client_page_frm.dart';
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
-import 'package:jarlenmodas/widgets/loading_widget.dart';
+import 'package:jarlenmodas/components/loading/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 
 class ClientPage extends StatelessWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jarlenmodas/widgets/loading_widget.dart';
+import 'package:jarlenmodas/components/loading/loading_widget.dart';
 
 class LoadingUtil {
   static void showLoading(BuildContext context) {

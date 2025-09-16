@@ -6,8 +6,8 @@ import 'package:jarlenmodas/core/error_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit_frm/client_cubit_frm.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
-import 'package:jarlenmodas/utils/validators/custom_validators.dart';
-import 'package:jarlenmodas/utils/validators/unique_cpf_validator.dart';
+import 'package:jarlenmodas/utils/form_utils/validators/custom_validators.dart';
+import 'package:jarlenmodas/utils/form_utils/validators/unique_cpf_validator.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 

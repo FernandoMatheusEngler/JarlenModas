@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:jarlenmodas/core/consts.dart';
-import 'package:jarlenmodas/widgets/menu_itens/menu_item_widget.dart';
+import 'package:jarlenmodas/components/menu_itens/menu_item_widget.dart';
 
 class LayoutWidget extends StatelessWidget {
   final Widget content;

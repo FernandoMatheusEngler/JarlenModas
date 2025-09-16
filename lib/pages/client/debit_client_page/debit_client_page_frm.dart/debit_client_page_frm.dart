@@ -2,16 +2,21 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jarlenmodas/components/drop_down/drop_down_search_widget.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
+import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_filter.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart'; // Verifique se este import está correto
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
+import 'package:jarlenmodas/components/loading/loading_widget.dart';
+import 'package:jarlenmodas/utils/form_utils/value_acessor/currency_value_acessor.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:intl/intl.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 class DebitClientPageFrm extends StatefulWidget {
   const DebitClientPageFrm({super.key, this.cpfCliente});
@@ -23,23 +28,23 @@ class DebitClientPageFrm extends StatefulWidget {
 
 class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   final TextEditingController cpfController = TextEditingController();
-  final TextEditingController nomeController = TextEditingController();
+  Uint8List? _selectedDocument;
+
   late final ClientPageCubit clientCubit;
   late final DebitClientPageCubit debitCubit;
-  late List<PlutoColumn> columns;
+
   late PlutoGridStateManager stateManager;
+  late List<PlutoColumn> columns;
 
   late final FormGroup form;
-  Uint8List? _selectedDocument;
 
   @override
   void initState() {
     super.initState();
-    cpfController.text = widget.cpfCliente ?? '';
-    clientCubit = ClientPageCubit(ClientService());
-    debitCubit = DebitClientPageCubit(DebitClientService());
 
+    cpfController.text = widget.cpfCliente ?? '';
     form = FormGroup({
+      'client': FormControl<ClientModel>(validators: [Validators.required]),
       'value': FormControl<double>(
         validators: [Validators.required, Validators.min(0.01)],
       ),
@@ -113,14 +118,24 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       ),
     ];
 
-    if (widget.cpfCliente != null && widget.cpfCliente!.isNotEmpty) {
-      loadData(widget.cpfCliente!);
-    }
+    loadData(widget.cpfCliente);
   }
 
-  void loadData(String cpf) {
-    clientCubit.load(ClientFilter(cpfClient: cpf));
+  void loadDebits(String cpf) {
     debitCubit.load(DebitClientFilter(cpfClient: cpf));
+  }
+
+  void loadClients() {
+    clientCubit.load(ClientFilter());
+  }
+
+  void loadData(String? cpfClient) {
+    clientCubit = ClientPageCubit(ClientService());
+    debitCubit = DebitClientPageCubit(DebitClientService());
+    loadClients();
+    if (cpfClient != null && cpfClient.isNotEmpty) {
+      loadDebits(cpfClient);
+    }
   }
 
   Future<void> _pickDocument() async {
@@ -164,15 +179,22 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   }
 
   void _editDebit(PlutoRow row) {
+    final dueDateValue = row.cells['dueDate']?.value;
+    DateTime? dueDate;
+    if (dueDateValue is DateTime) {
+      dueDate = dueDateValue;
+    } else if (dueDateValue is String) {
+      dueDate = DateTime.tryParse(dueDateValue);
+    }
+
     form.patchValue({
       'value': row.cells['value']?.value,
-      'dueDate': row.cells['dueDate']?.value,
+      'dueDate': dueDate,
       'document': row.cells['document']?.value,
     });
     setState(() {
       _selectedDocument = row.cells['document']?.value;
     });
-    stateManager.removeRows([row]);
   }
 
   void _deleteDebit(PlutoRow row) {
@@ -221,62 +243,89 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: TextField(
-                    controller: cpfController,
-                    decoration: const InputDecoration(
-                      labelText: "CPF do Cliente",
-                    ),
-                    readOnly: isCpfReadOnly,
-                    onSubmitted: (cpf) {
-                      if (cpf.isNotEmpty) {
-                        loadData(cpf);
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 2,
-                  child: BlocBuilder<ClientPageCubit, ClientPageState>(
-                    bloc: clientCubit,
-                    builder: (context, state) {
-                      if (state.loading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (state.clients.isNotEmpty) {
-                        nomeController.text = state.clients.first.name;
-                      } else {
-                        nomeController.text = '';
-                      }
-                      return TextField(
-                        controller: nomeController,
-                        decoration: const InputDecoration(
-                          labelText: "Nome do Cliente",
-                        ),
-                        readOnly: true,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
             ReactiveForm(
               formGroup: form,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 1,
+                        child: BlocBuilder<ClientPageCubit, ClientPageState>(
+                          bloc: clientCubit,
+                          builder: (context, clientState) {
+                            if (clientState.loading) {
+                              return const LoadingWidget();
+                            }
+
+                            ClientModel? client = clientCubit.state.clients
+                                .where(
+                                  (element) =>
+                                      element.cpfClient == widget.cpfCliente,
+                                )
+                                .firstOrNull;
+
+                            return ReactiveFormField<ClientModel, ClientModel>(
+                              formControlName: 'client',
+                              validationMessages: {
+                                ValidationMessage.required: (_) =>
+                                    'O cliente é obrigatório.',
+                              },
+                              builder: (field) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    DropDownSearchWidget<ClientModel>(
+                                      textFunction: (client) => client.name,
+                                      initialValue: client ?? field.value,
+                                      sourceList: clientCubit.state.clients,
+                                      placeholder: 'Cliente',
+                                      readOnly: isCpfReadOnly,
+                                      onChanged: (value) {
+                                        field.didChange(value);
+                                        cpfController.text =
+                                            value?.cpfClient ?? '';
+                                        field.control.markAsTouched();
+                                      },
+                                    ),
+                                    if (field.control.invalid &&
+                                        field.control.touched)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 4.0,
+                                        ),
+                                        child: Text(
+                                          field.errorText ?? '',
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   ReactiveTextField<double>(
                     formControlName: 'value',
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      CurrencyTextInputFormatter.simpleCurrency(
+                        locale: 'pt_BR',
+                        decimalDigits: 2,
+                      ),
+                    ],
+                    valueAccessor: CurrencyValueAccessor(),
                     decoration: const InputDecoration(
-                      labelText: 'Valor da Despesa',
+                      labelText: 'Valor do Débito',
                     ),
                     validationMessages: {
                       ValidationMessage.required: (_) =>
@@ -307,6 +356,10 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                             valueAccessor: DateTimeValueAccessor(
                               dateTimeFormat: DateFormat('dd/MM/yyyy'),
                             ),
+                            validationMessages: {
+                              ValidationMessage.required: (_) =>
+                                  'A data de vencimento é obrigatória',
+                            },
                           ),
                           // ReactiveErrorMessages<DateTime>(
                           //   formControlName: 'dueDate',
@@ -381,9 +434,14 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                     configuration:
                         const PlutoGridConfiguration(), // sem rowColor
                     rowColorCallback: (PlutoRowColorContext rowColorContext) {
-                      final dueDate =
-                          rowColorContext.row.cells['dueDate']?.value
-                              as DateTime?;
+                      final dueDateValue =
+                          rowColorContext.row.cells['dueDate']?.value;
+                      DateTime? dueDate;
+                      if (dueDateValue is DateTime) {
+                        dueDate = dueDateValue;
+                      } else if (dueDateValue is String) {
+                        dueDate = DateTime.tryParse(dueDateValue);
+                      }
                       if (dueDate != null &&
                           dueDate.isBefore(
                             DateTime.now().subtract(const Duration(days: 1)),

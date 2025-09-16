@@ -13,7 +13,7 @@ import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.
 import 'package:jarlenmodas/pages/client/debit_client_page/debit_client_page_frm.dart/debit_client_page_frm.dart';
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
-import 'package:jarlenmodas/widgets/loading_widget.dart';
+import 'package:jarlenmodas/components/loading/loading_widget.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 
 class DebitClientPage extends StatelessWidget {
