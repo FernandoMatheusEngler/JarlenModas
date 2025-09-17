@@ -139,7 +139,11 @@ class _ClientPageContentState extends State<ClientPageContent> {
 
     if (confirm == true) {
       await cubit.delete(cpfClient);
-      MessageHelper.showSuccessMessage('Cliente excluído com sucesso!');
+      MessageHelper.showSuccessMessage(
+        // ignore: use_build_context_synchronously
+        context,
+        'Cliente excluído com sucesso!',
+      );
       refreshList();
     }
   }
@@ -150,7 +154,7 @@ class _ClientPageContentState extends State<ClientPageContent> {
 
   void onSaved(String cpfClient) {
     Navigator.pop(context);
-    MessageHelper.showSuccessMessage('Cliente salvo com sucesso!');
+    MessageHelper.showSuccessMessage(context, 'Cliente salvo com sucesso!');
     refreshList();
   }
 

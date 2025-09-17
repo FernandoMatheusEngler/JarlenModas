@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jarlenmodas/components/drop_down/drop_down_search_widget.dart';
+import 'package:jarlenmodas/core/message_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_filter.dart';
-import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart'; // Verifique se este import está correto
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
 import 'package:jarlenmodas/components/loading/loading_widget.dart';
@@ -81,7 +81,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         type: PlutoColumnType.date(format: 'dd/MM/yyyy'),
       ),
       PlutoColumn(
-        title: 'Documento',
+        title: 'Comprovante',
         field: 'document',
         type: PlutoColumnType.text(),
         readOnly: true,
@@ -151,31 +151,44 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   }
 
   void _addExpenseToGrid() {
-    if (form.valid && cpfController.text.isNotEmpty) {
-      final newRow = PlutoRow(
-        cells: {
-          'value': PlutoCell(value: form.control('value').value),
-          'dueDate': PlutoCell(value: form.control('dueDate').value),
-          'document': PlutoCell(value: form.control('document').value),
-          'actions': PlutoCell(value: ''),
-        },
-      );
-      stateManager.appendRows([newRow]);
-      form.reset();
-      setState(() {
-        _selectedDocument = null;
-      });
-    } else {
+    if (!form.valid && cpfController.text.isEmpty) {
       form.markAllAsTouched();
       if (cpfController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Por favor, informe o CPF do cliente primeiro.'),
-            backgroundColor: Colors.orange,
-          ),
+        MessageHelper.showWarningMessage(
+          context,
+          'Por favor, informe o cliente primeiro.',
         );
+        return;
       }
     }
+
+    final newRow = PlutoRow(
+      cells: {
+        'value': PlutoCell(value: form.control('value').value),
+        'dueDate': PlutoCell(value: form.control('dueDate').value),
+        'document': PlutoCell(value: form.control('document').value),
+        'actions': PlutoCell(value: ''),
+      },
+    );
+    stateManager.appendRows([newRow]);
+    form.reset();
+    setState(() {
+      _selectedDocument = null;
+    });
+    changeEnabledClientDropDown(false);
+  }
+
+  void changeEnabledClientDropDown(bool enabled) {
+    setState(() {
+      if (enabled) {
+        form.control('client').markAsEnabled();
+        cpfController.text = '';
+      } else {
+        final selectedClient = form.control('client').value as ClientModel?;
+        cpfController.text = selectedClient?.cpfClient ?? '';
+        form.control('client').markAsDisabled();
+      }
+    });
   }
 
   void _editDebit(PlutoRow row) {
@@ -199,6 +212,11 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
 
   void _deleteDebit(PlutoRow row) {
     stateManager.removeRows([row]);
+    bool isClientSaved =
+        widget.cpfCliente != null && widget.cpfCliente!.isNotEmpty;
+    if (!isClientSaved && stateManager.rows.isEmpty) {
+      changeEnabledClientDropDown(true);
+    }
   }
 
   void _saveDebits() {
@@ -212,16 +230,16 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       return;
     }
 
-    final List<DebitClientModel> debitsToSave = stateManager.rows.map((row) {
-      return DebitClientModel(
-        id: '',
-        cpfClient: cpfController.text,
-        value: row.cells['value']!.value,
-        dueDate: DateFormat('yyyy-MM-dd').format(row.cells['dueDate']!.value),
-        dataCreation: DateTime.now(),
-        document: row.cells['document']!.value as Uint8List?,
-      );
-    }).toList();
+    // final List<DebitClientModel> debitsToSave = stateManager.rows.map((row) {
+    //   return DebitClientModel(
+    //     id: '',
+    //     cpfClient: cpfController.text,
+    //     value: row.cells['value']!.value,
+    //     dueDate: DateFormat('yyyy-MM-dd').format(row.cells['dueDate']!.value),
+    //     dataCreation: DateTime.now(),
+    //     document: row.cells['document']!.value as Uint8List?,
+    //   );
+    // }).toList();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -282,7 +300,9 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                                       initialValue: client ?? field.value,
                                       sourceList: clientCubit.state.clients,
                                       placeholder: 'Cliente',
-                                      readOnly: isCpfReadOnly,
+                                      readOnly:
+                                          isCpfReadOnly ||
+                                          !field.control.enabled,
                                       onChanged: (value) {
                                         field.didChange(value);
                                         cpfController.text =
@@ -361,16 +381,6 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                                   'A data de vencimento é obrigatória',
                             },
                           ),
-                          // ReactiveErrorMessages<DateTime>(
-                          //   formControlName: 'dueDate',
-                          //   validationMessages: {
-                          //     ValidationMessage.required: (_) =>
-                          //         'A data de vencimento é obrigatória',
-                          //     ValidationMessage.min: (_) => 'Data inválida',
-                          //     ValidationMessage.max: (_) =>
-                          //         'Data fora do intervalo permitido',
-                          //   },
-                          // ),
                         ],
                       );
                     },
@@ -381,14 +391,14 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                       ElevatedButton.icon(
                         onPressed: _pickDocument,
                         icon: const Icon(Icons.attach_file),
-                        label: const Text('Anexar Nota'),
+                        label: const Text('Anexar Comprovante'),
                       ),
                       const SizedBox(width: 10),
                       if (_selectedDocument != null)
                         const Icon(Icons.check_circle, color: Colors.green),
                       if (_selectedDocument != null) const SizedBox(width: 5),
                       if (_selectedDocument != null)
-                        const Text("Documento selecionado"),
+                        const Text("Comprovante selecionado"),
                     ],
                   ),
                   const SizedBox(height: 16),
