@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jarlenmodas/components/drop_down/drop_down_search_widget.dart';
-import 'package:jarlenmodas/core/message_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
@@ -29,6 +28,7 @@ class DebitClientPageFrm extends StatefulWidget {
 class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   final TextEditingController cpfController = TextEditingController();
   Uint8List? _selectedDocument;
+  int? _idDebitSelected;
 
   late final ClientPageCubit clientCubit;
   late final DebitClientPageCubit debitCubit;
@@ -52,10 +52,16 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       'document': FormControl<Uint8List>(),
     });
 
-    columns = [
+    columns = createColumnsGrid();
+    loadData(widget.cpfCliente);
+  }
+
+  List<PlutoColumn> createColumnsGrid() {
+    return [
       PlutoColumn(
         title: 'Valor',
         field: 'value',
+        enableEditingMode: false,
         type: PlutoColumnType.currency(
           symbol: "R\$ ",
           format: "#,##0.00",
@@ -66,7 +72,6 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
             0,
             (sum, row) => sum + (row.cells['value']?.value ?? 0.0),
           );
-          // CORREÇÃO 1: Retorna o widget diretamente, sem PlutoGridTableFooter
           return Center(
             child: Text(
               'Total: ${NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(total)}',
@@ -79,6 +84,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         title: 'Data Vencimento',
         field: 'dueDate',
         type: PlutoColumnType.date(format: 'dd/MM/yyyy'),
+        enableEditingMode: false,
       ),
       PlutoColumn(
         title: 'Comprovante',
@@ -89,6 +95,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
           final hasDocument = rendererContext.cell.value != null;
           return Text(hasDocument ? "Anexado" : "Nenhum");
         },
+        enableEditingMode: false,
       ),
       PlutoColumn(
         title: 'Ações',
@@ -117,8 +124,6 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         },
       ),
     ];
-
-    loadData(widget.cpfCliente);
   }
 
   void loadDebits(String cpf) {
@@ -151,62 +156,96 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   }
 
   void _addExpenseToGrid() {
-    if (!form.valid && cpfController.text.isEmpty) {
+    if (!form.valid) {
       form.markAllAsTouched();
-      if (cpfController.text.isEmpty) {
-        MessageHelper.showWarningMessage(
-          context,
-          'Por favor, informe o cliente primeiro.',
-        );
-        return;
-      }
+      return;
+    }
+
+    final existingRow = stateManager.rows.firstWhere(
+      (row) => row.cells['rowIndex']?.value == _idDebitSelected,
+      orElse: () => PlutoRow(cells: {}),
+    );
+
+    if (existingRow.cells.isNotEmpty) {
+      updateDataDebitClientGrid(existingRow);
+      return;
     }
 
     final newRow = PlutoRow(
       cells: {
+        'rowIndex': PlutoCell(value: stateManager.rows.length + 1),
         'value': PlutoCell(value: form.control('value').value),
         'dueDate': PlutoCell(value: form.control('dueDate').value),
         'document': PlutoCell(value: form.control('document').value),
         'actions': PlutoCell(value: ''),
       },
     );
+
     stateManager.appendRows([newRow]);
-    form.reset();
-    setState(() {
-      _selectedDocument = null;
-    });
+    resetFormAfterChange();
     changeEnabledClientDropDown(false);
   }
 
+  void updateDataDebitClientGrid(PlutoRow existingRow) {
+    final DateTime? dueDate = form.control('dueDate').value;
+    existingRow.cells['value']?.value = form.control('value').value;
+    existingRow.cells['dueDate']?.value = dueDate != null
+        ? DateFormat('dd/MM/yyyy').format(dueDate)
+        : null;
+    existingRow.cells['document']?.value = form.control('document').value;
+    stateManager.notifyListeners();
+    resetFormAfterChange();
+  }
+
+  void resetFormAfterChange() {
+    form.reset();
+    setState(() {
+      _selectedDocument = null;
+      _idDebitSelected = null;
+    });
+  }
+
+  // Variável de instância para salvar o valor.
+  ClientModel? _clientValueBeforeDisable;
+
   void changeEnabledClientDropDown(bool enabled) {
+    final clientControl = form.control('client');
+
     setState(() {
       if (enabled) {
-        form.control('client').markAsEnabled();
-        cpfController.text = '';
+        clientControl.markAsEnabled();
+
+        if (_clientValueBeforeDisable != null) {
+          clientControl.updateValue(_clientValueBeforeDisable);
+          clientControl.markAsTouched();
+          _clientValueBeforeDisable = null; //
+        }
       } else {
-        final selectedClient = form.control('client').value as ClientModel?;
-        cpfController.text = selectedClient?.cpfClient ?? '';
-        form.control('client').markAsDisabled();
+        _clientValueBeforeDisable = clientControl.value;
+        clientControl.markAsDisabled();
       }
     });
   }
 
   void _editDebit(PlutoRow row) {
     final dueDateValue = row.cells['dueDate']?.value;
-    DateTime? dueDate;
+    DateTime? parsedDate;
+
     if (dueDateValue is DateTime) {
-      dueDate = dueDateValue;
-    } else if (dueDateValue is String) {
-      dueDate = DateTime.tryParse(dueDateValue);
+      parsedDate = dueDateValue;
+    } else if (dueDateValue is String && dueDateValue.isNotEmpty) {
+      parsedDate = DateFormat('dd/MM/yyyy').parse(dueDateValue);
     }
 
     form.patchValue({
       'value': row.cells['value']?.value,
-      'dueDate': dueDate,
+      'dueDate': parsedDate,
       'document': row.cells['document']?.value,
     });
+
     setState(() {
       _selectedDocument = row.cells['document']?.value;
+      _idDebitSelected = row.cells['rowIndex']?.value;
     });
   }
 
@@ -216,6 +255,11 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         widget.cpfCliente != null && widget.cpfCliente!.isNotEmpty;
     if (!isClientSaved && stateManager.rows.isEmpty) {
       changeEnabledClientDropDown(true);
+    }
+
+    bool hasDebitSelect = _idDebitSelected != null;
+    if (hasDebitSelect) {
+      resetFormAfterChange();
     }
   }
 
@@ -407,7 +451,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                     child: ElevatedButton.icon(
                       onPressed: _addExpenseToGrid,
                       icon: const Icon(Icons.add),
-                      label: const Text("Adicionar Despesa ao Grid"),
+                      label: const Text("Adicionar Despesa"),
                     ),
                   ),
                 ],
@@ -422,14 +466,16 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final rows = state.debitClients.map((d) {
+                  final rows = state.debitClients.map((debit) {
+                    int contador = 0;
                     return PlutoRow(
                       cells: {
-                        'value': PlutoCell(value: d.value),
+                        'rowIndex': PlutoCell(value: contador++),
+                        'value': PlutoCell(value: debit.value),
                         'dueDate': PlutoCell(
-                          value: DateTime.tryParse(d.dueDate),
+                          value: DateTime.tryParse(debit.dueDate),
                         ),
-                        'document': PlutoCell(value: d.document),
+                        'document': PlutoCell(value: debit.document),
                         'actions': PlutoCell(value: ''),
                       },
                     );
