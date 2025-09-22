@@ -198,7 +198,9 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   }
 
   void resetFormAfterChange() {
-    form.reset();
+    form.control('value').reset();
+    form.control('dueDate').reset();
+    form.control('document').reset();
     setState(() {
       _selectedDocument = null;
       _idDebitSelected = null;
@@ -211,20 +213,17 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   void changeEnabledClientDropDown(bool enabled) {
     final clientControl = form.control('client');
 
-    setState(() {
-      if (enabled) {
+    if (enabled) {
+      if (_clientValueBeforeDisable != null) {
         clientControl.markAsEnabled();
-
-        if (_clientValueBeforeDisable != null) {
-          clientControl.updateValue(_clientValueBeforeDisable);
-          clientControl.markAsTouched();
-          _clientValueBeforeDisable = null; //
-        }
-      } else {
-        _clientValueBeforeDisable = clientControl.value;
-        clientControl.markAsDisabled();
+        clientControl.markAsTouched();
+        clientControl.updateValue(_clientValueBeforeDisable);
+        _clientValueBeforeDisable = null;
       }
-    });
+    } else {
+      _clientValueBeforeDisable = clientControl.value;
+      clientControl.markAsDisabled();
+    }
   }
 
   void _editDebit(PlutoRow row) {
@@ -520,7 +519,9 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: _saveDebits,
+                  onPressed: form.valid || stateManager.rows.isNotEmpty
+                      ? _saveDebits
+                      : null,
                   icon: const Icon(Icons.save),
                   label: const Text('Salvar Tudo'),
                 ),
