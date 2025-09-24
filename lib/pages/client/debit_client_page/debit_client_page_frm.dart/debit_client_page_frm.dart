@@ -5,9 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:jarlenmodas/components/drop_down/drop_down_search_widget.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
+import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit_frm/debit_client_cubit_frm.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_filter.dart';
+import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart';
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
 import 'package:jarlenmodas/components/loading/loading_widget.dart';
@@ -16,10 +18,13 @@ import 'package:pluto_grid/pluto_grid.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:intl/intl.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:image_compression_flutter/image_compression_flutter.dart';
 
 class DebitClientPageFrm extends StatefulWidget {
-  const DebitClientPageFrm({super.key, this.cpfCliente});
+  const DebitClientPageFrm({super.key, this.cpfCliente, required this.onSaved});
   final String? cpfCliente;
+  final void Function() onSaved;
 
   @override
   State<DebitClientPageFrm> createState() => _DebitClientPageFrmState();
@@ -29,9 +34,11 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   final TextEditingController cpfController = TextEditingController();
   Uint8List? _selectedDocument;
   int? _idDebitSelected;
+  bool hasRows = false;
 
   late final ClientPageCubit clientCubit;
   late final DebitClientPageCubit debitCubit;
+  late final DebitClientPageFrmCubit cubit;
 
   late PlutoGridStateManager stateManager;
   late List<PlutoColumn> columns;
@@ -137,6 +144,8 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   void loadData(String? cpfClient) {
     clientCubit = ClientPageCubit(ClientService());
     debitCubit = DebitClientPageCubit(DebitClientService());
+    cubit = DebitClientPageFrmCubit(service: DebitClientService());
+
     loadClients();
     if (cpfClient != null && cpfClient.isNotEmpty) {
       loadDebits(cpfClient);
@@ -273,24 +282,18 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       return;
     }
 
-    // final List<DebitClientModel> debitsToSave = stateManager.rows.map((row) {
-    //   return DebitClientModel(
-    //     id: '',
-    //     cpfClient: cpfController.text,
-    //     value: row.cells['value']!.value,
-    //     dueDate: DateFormat('yyyy-MM-dd').format(row.cells['dueDate']!.value),
-    //     dataCreation: DateTime.now(),
-    //     document: row.cells['document']!.value as Uint8List?,
-    //   );
-    // }).toList();
+    final List<DebitClientModel> debitsToSave = stateManager.rows.map((row) {
+      return DebitClientModel(
+        id: '',
+        cpfClient: cpfController.text,
+        value: row.cells['value']!.value,
+        dueDate: row.cells['dueDate']!.value,
+        dataCreation: DateTime.now(),
+        document: row.cells['document']!.value,
+      );
+    }).toList();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Débitos salvos com sucesso!"),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Navigator.pop(context);
+    cubit.save(debitsToSave, widget.onSaved);
   }
 
   @override
@@ -485,6 +488,16 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                     rows: rows,
                     onLoaded: (event) {
                       stateManager = event.stateManager;
+
+                      setState(() {
+                        hasRows = stateManager.rows.isNotEmpty;
+                      });
+
+                      stateManager.addListener(() {
+                        setState(() {
+                          hasRows = stateManager.rows.isNotEmpty;
+                        });
+                      });
                     },
                     configuration:
                         const PlutoGridConfiguration(), // sem rowColor
@@ -519,9 +532,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                 ),
                 const SizedBox(width: 8),
                 FilledButton.icon(
-                  onPressed: form.valid || stateManager.rows.isNotEmpty
-                      ? _saveDebits
-                      : null,
+                  onPressed: form.valid || hasRows ? _saveDebits : null,
                   icon: const Icon(Icons.save),
                   label: const Text('Salvar Tudo'),
                 ),

@@ -4,6 +4,7 @@ import 'package:jarlenmodas/components/buttons/refresh_button_widget.dart';
 import 'package:jarlenmodas/components/drop_down/drop_down_search_widget.dart';
 import 'package:jarlenmodas/components/buttons/filter_dialog_widget.dart';
 import 'package:jarlenmodas/core/error_helper.dart';
+import 'package:jarlenmodas/core/message_helper.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
@@ -115,7 +116,8 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DebitClientPageFrm(cpfCliente: cpfCliente),
+        builder: (context) =>
+            DebitClientPageFrm(cpfCliente: cpfCliente, onSaved: onSaved),
       ),
     );
   }
@@ -153,6 +155,12 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
     );
     if (confirm != true) return;
     cubit.load(filter);
+  }
+
+  void onSaved() {
+    Navigator.pop(context);
+    MessageHelper.showSuccessMessage(context, 'Débitos salvos com sucesso!');
+    refreshList();
   }
 
   void refreshList() {
