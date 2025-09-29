@@ -18,8 +18,6 @@ import 'package:pluto_grid/pluto_grid.dart';
 import 'package:reactive_forms/reactive_forms.dart';
 import 'package:intl/intl.dart';
 import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:image_compression_flutter/image_compression_flutter.dart';
 
 class DebitClientPageFrm extends StatefulWidget {
   const DebitClientPageFrm({super.key, this.cpfCliente, required this.onSaved});
@@ -216,7 +214,6 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
     });
   }
 
-  // Variável de instância para salvar o valor.
   ClientModel? _clientValueBeforeDisable;
 
   void changeEnabledClientDropDown(bool enabled) {
