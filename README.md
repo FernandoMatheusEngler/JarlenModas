@@ -48,6 +48,7 @@ dart pub global activate flutterfire_cli
 
 Após rodar o comando acima na raiz do projeto rode o comando :
 
+firebase login
 flutterfire configure
 Ele deve pedir o login na conta, usando o login da conta e vinculando ao projeto jarlen-modas irá gerar o  lib/firebase_options.dart necessário para rodar o projeto.
 
