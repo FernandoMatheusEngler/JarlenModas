@@ -286,7 +286,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         value: row.cells['value']!.value,
         dueDate: row.cells['dueDate']!.value,
         dataCreation: DateTime.now(),
-        document: row.cells['document']!.value,
+        // document: row.cells['document']!.value,
       );
     }).toList();
 

@@ -50,22 +50,22 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAUWX9GW_JheXwagPaUvwUk4yUxcImd35U',
-    appId: '1:666930471446:web:de517b5dfe22400aaf0b37',
-    messagingSenderId: '666930471446',
-    projectId: 'jarlen-modas',
-    authDomain: 'jarlen-modas.firebaseapp.com',
-    storageBucket: 'jarlen-modas.firebasestorage.app',
-    measurementId: 'G-KJTJKLMR9L',
+    apiKey: 'AIzaSyB480a396XxGLukS4qHnHGA3PUC811rQi4',
+    appId: '1:949412297273:web:d6f3eecc8bd6b652afebe8',
+    messagingSenderId: '949412297273',
+    projectId: 'jarlen-modas-fernando',
+    authDomain: 'jarlen-modas-fernando.firebaseapp.com',
+    storageBucket: 'jarlen-modas-fernando.firebasestorage.app',
+    measurementId: 'G-BB9TXYWQ42',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAUWX9GW_JheXwagPaUvwUk4yUxcImd35U',
-    appId: '1:666930471446:web:d738e33b18ad6c2eaf0b37',
-    messagingSenderId: '666930471446',
-    projectId: 'jarlen-modas',
-    authDomain: 'jarlen-modas.firebaseapp.com',
-    storageBucket: 'jarlen-modas.firebasestorage.app',
-    measurementId: 'G-2W7PC49DES',
+    apiKey: 'AIzaSyB480a396XxGLukS4qHnHGA3PUC811rQi4',
+    appId: '1:949412297273:web:39d96dc1305a842dafebe8',
+    messagingSenderId: '949412297273',
+    projectId: 'jarlen-modas-fernando',
+    authDomain: 'jarlen-modas-fernando.firebaseapp.com',
+    storageBucket: 'jarlen-modas-fernando.firebasestorage.app',
+    measurementId: 'G-2RGP5WC0VV',
   );
 }

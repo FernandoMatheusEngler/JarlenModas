@@ -28,6 +28,7 @@ dependencies:
   image: ^4.1.7
   intl: ^0.19.0
   currency_text_input_formatter: ^2.0.1
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +36,12 @@ dev_dependencies:
 
   flutter_lints: ^5.0.0
 
+flutter_launcher_icons:
+  image_path: "assets/images/windows_apllication_icon.ico"
+  windows:
+    generate: true
+  web:
+    generate: false
 flutter:
   assets:
      - assets/images/logo_empresa.png
