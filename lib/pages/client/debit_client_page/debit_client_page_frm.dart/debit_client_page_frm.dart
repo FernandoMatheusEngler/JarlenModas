@@ -6,10 +6,10 @@ import 'package:jarlenmodas/components/drop_down/drop_down_search_widget.dart';
 import 'package:jarlenmodas/cubits/client/client_cubit/client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit.dart';
 import 'package:jarlenmodas/cubits/client/debit_client_cubit/debit_client_cubit_frm/debit_client_cubit_frm.dart';
+import 'package:jarlenmodas/dto/client/debit_client_dto.dart';
 import 'package:jarlenmodas/models/client/client_model/client_filter.dart';
 import 'package:jarlenmodas/models/client/client_model/client_model.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_filter.dart';
-import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart';
 import 'package:jarlenmodas/services/clients/client_service/client_service.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
 import 'package:jarlenmodas/components/loading/loading_widget.dart';
@@ -242,14 +242,21 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       parsedDate = DateFormat('dd/MM/yyyy').parse(dueDateValue);
     }
 
+    final documentValue = row.cells['document']?.value;
+    Uint8List? documentBytes;
+
+    if (documentValue is Uint8List) {
+      documentBytes = documentValue;
+    }
+
     form.patchValue({
       'value': row.cells['value']?.value,
       'dueDate': parsedDate,
-      'document': row.cells['document']?.value,
+      'document': documentBytes,
     });
 
     setState(() {
-      _selectedDocument = row.cells['document']?.value;
+      _selectedDocument = documentBytes;
       _idDebitSelected = row.cells['rowIndex']?.value;
     });
   }
@@ -279,14 +286,13 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       return;
     }
 
-    final List<DebitClientModel> debitsToSave = stateManager.rows.map((row) {
-      return DebitClientModel(
-        id: '',
+    final List<DebitClientDTO> debitsToSave = stateManager.rows.map((row) {
+      return DebitClientDTO(
         cpfClient: cpfController.text,
         value: row.cells['value']!.value,
         dueDate: row.cells['dueDate']!.value,
         dataCreation: DateTime.now(),
-        // document: row.cells['document']!.value,
+        documentoBytes: row.cells['document']!.value,
       );
     }).toList();
 
@@ -464,9 +470,8 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                   if (state.loading) {
                     return const Center(child: CircularProgressIndicator());
                   }
-
+                  int contador = 0;
                   final rows = state.debitClients.map((debit) {
-                    int contador = 0;
                     return PlutoRow(
                       cells: {
                         'rowIndex': PlutoCell(value: contador++),
@@ -474,7 +479,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                         'dueDate': PlutoCell(
                           value: DateTime.tryParse(debit.dueDate),
                         ),
-                        'document': PlutoCell(value: debit.document),
+                        'document': PlutoCell(value: debit.documentUrl),
                         'actions': PlutoCell(value: ''),
                       },
                     );

@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:jarlenmodas/dto/client/debit_client_dto.dart';
 import 'package:jarlenmodas/models/client/debit_client_model/debit_client_model.dart';
 import 'package:jarlenmodas/services/clients/debit_clients_service/debit_client_service.dart';
 
@@ -7,19 +10,39 @@ class DebitClientPageFrmCubit extends Cubit<DebitClientPageFrmCubitState> {
   DebitClientPageFrmCubit({required this.service})
     : super(DebitClientPageFrmCubitState(debitClients: []));
 
-  void save(
-    List<DebitClientModel> debitClients,
+  Future<void> save(
+    List<DebitClientDTO> debitClients,
     final void Function() onSaved,
-  ) {
+  ) async {
     try {
       emit(DebitClientPageFrmCubitState(debitClients: [], loading: true));
+      List<DebitClientModel> debitsToSave = [];
 
-      for (var debitClient in debitClients) {
-        service.addDebitClient(debitClient);
+      for (DebitClientDTO debit in debitClients) {
+        String? documentUrl;
+        if (debit.documentoBytes != null && debit.documentoBytes is Uint8List) {
+          documentUrl = await service.uploadDocumentAsWebP(
+            imageBytes: debit.documentoBytes as Uint8List,
+            cpfClient: debit.cpfClient,
+          );
+        }
+
+        final debitToSave = DebitClientModel(
+          id: '',
+          cpfClient: debit.cpfClient,
+          value: debit.value,
+          dueDate: debit.dueDate,
+          dataCreation: debit.dataCreation,
+          documentUrl: documentUrl,
+        );
+
+        service.addDebitClient(debitToSave);
+        debitsToSave.add(debitToSave);
       }
+
       emit(
         DebitClientPageFrmCubitState(
-          debitClients: debitClients,
+          debitClients: debitsToSave,
           loading: false,
           saved: true,
           message: 'Débitos salvos com sucesso!',

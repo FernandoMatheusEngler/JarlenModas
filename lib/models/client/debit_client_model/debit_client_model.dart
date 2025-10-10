@@ -1,12 +1,10 @@
-import 'dart:typed_data';
-
 class DebitClientModel {
   String id;
   String cpfClient;
   double value;
   String dueDate;
   DateTime? dataCreation;
-  Uint8List? document;
+  String? documentUrl;
 
   DebitClientModel({
     required this.id,
@@ -14,7 +12,7 @@ class DebitClientModel {
     required this.value,
     required this.dueDate,
     required this.dataCreation,
-    this.document,
+    this.documentUrl,
   });
 
   Map<String, dynamic> toMap() {
@@ -24,7 +22,7 @@ class DebitClientModel {
       'value': value,
       'dueDate': dueDate,
       'dataCreation': dataCreation?.toIso8601String(),
-      'document': document,
+      'documentUrl': documentUrl,
     };
   }
 
@@ -37,9 +35,7 @@ class DebitClientModel {
       dataCreation: map['dataCreation'] != null
           ? DateTime.parse(map['dataCreation'])
           : null,
-      document: map['document'] != null
-          ? Uint8List.fromList(List<int>.from(map['digitizedDocument']))
-          : null,
+      documentUrl: map['documentUrl'],
     );
   }
 }
