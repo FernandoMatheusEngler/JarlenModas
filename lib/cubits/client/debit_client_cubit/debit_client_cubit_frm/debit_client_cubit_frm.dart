@@ -28,7 +28,6 @@ class DebitClientPageFrmCubit extends Cubit<DebitClientPageFrmCubitState> {
         }
 
         final debitToSave = DebitClientModel(
-          id: '',
           cpfClient: debit.cpfClient,
           value: debit.value,
           dueDate: debit.dueDate,

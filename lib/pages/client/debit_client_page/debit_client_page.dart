@@ -94,18 +94,39 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
       PlutoColumn(
         title: 'Valor Total Débito',
         field: 'valorTotalDebito',
-        type: PlutoColumnType.number(),
+        type: PlutoColumnType.number(
+          applyFormatOnInit: true,
+          format: '#,##0.00',
+        ),
         readOnly: true,
       ),
     ];
+    refreshList();
   }
 
   List<PlutoRow> debitsToRows(List<DebitClientModel> debits) {
-    return debits.map((debit) {
+    Map<String, DebitClientModel> debitsByCpf = {};
+
+    for (final DebitClientModel debit in debits) {
+      if (debitsByCpf.containsKey(debit.cpfClient)) {
+        final DebitClientModel existingDebit = debitsByCpf[debit.cpfClient]!;
+        existingDebit.value += debit.value;
+        debitsByCpf[debit.cpfClient] = existingDebit;
+      } else {
+        debitsByCpf[debit.cpfClient] = debit;
+      }
+    }
+
+    return debitsByCpf.values.toList().map((debit) {
+      clientCubit.load(ClientFilter(cpfClient: debit.cpfClient));
+      ClientModel? client = clientCubit.state.clients
+          .where((element) => element.cpfClient == debit.cpfClient)
+          .firstOrNull;
       return PlutoRow(
         cells: {
+          'acoes': PlutoCell(value: ''),
           'cpfClient': PlutoCell(value: debit.cpfClient),
-          'nome': PlutoCell(value: ''),
+          'nome': PlutoCell(value: client?.name ?? ''),
           'valorTotalDebito': PlutoCell(value: debit.value),
         },
       );

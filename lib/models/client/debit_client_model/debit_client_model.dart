@@ -1,5 +1,4 @@
 class DebitClientModel {
-  String id;
   String cpfClient;
   double value;
   String dueDate;
@@ -7,7 +6,6 @@ class DebitClientModel {
   String? documentUrl;
 
   DebitClientModel({
-    required this.id,
     required this.cpfClient,
     required this.value,
     required this.dueDate,
@@ -17,7 +15,6 @@ class DebitClientModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'cpfClient': cpfClient,
       'value': value,
       'dueDate': dueDate,
@@ -28,7 +25,6 @@ class DebitClientModel {
 
   factory DebitClientModel.fromMap(Map<String, dynamic> map) {
     return DebitClientModel(
-      id: map['id'] ?? '',
       cpfClient: map['cpfClient'] ?? '',
       value: (map['value'] ?? 0.0).toDouble(),
       dueDate: map['dueDate'] ?? '',
