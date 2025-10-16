@@ -104,7 +104,7 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
     refreshList();
   }
 
-  List<PlutoRow> debitsToRows(List<DebitClientModel> debits) {
+  Future<List<PlutoRow>> debitsToRows(List<DebitClientModel> debits) async {
     Map<String, DebitClientModel> debitsByCpf = {};
 
     for (final DebitClientModel debit in debits) {
@@ -117,20 +117,22 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
       }
     }
 
-    return debitsByCpf.values.toList().map((debit) {
-      clientCubit.load(ClientFilter(cpfClient: debit.cpfClient));
-      ClientModel? client = clientCubit.state.clients
-          .where((element) => element.cpfClient == debit.cpfClient)
-          .firstOrNull;
-      return PlutoRow(
-        cells: {
-          'acoes': PlutoCell(value: ''),
-          'cpfClient': PlutoCell(value: debit.cpfClient),
-          'nome': PlutoCell(value: client?.name ?? ''),
-          'valorTotalDebito': PlutoCell(value: debit.value),
-        },
-      );
-    }).toList();
+    return Future.wait(
+      debitsByCpf.values.toList().map((debit) async {
+        await clientCubit.load(ClientFilter(cpfClient: debit.cpfClient.trim()));
+        ClientModel? client = clientCubit.state.clients
+            .where((element) => element.cpfClient == debit.cpfClient)
+            .firstOrNull;
+        return PlutoRow(
+          cells: {
+            'acoes': PlutoCell(value: ''),
+            'cpfClient': PlutoCell(value: debit.cpfClient),
+            'nome': PlutoCell(value: client?.name ?? ''),
+            'valorTotalDebito': PlutoCell(value: debit.value),
+          },
+        );
+      }),
+    );
   }
 
   void _openDebitsClientFrm(String? cpfCliente) {
@@ -220,14 +222,26 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
               return const Center(child: LoadingWidget());
             }
             return Expanded(
-              child: PlutoGrid(
-                columns: columns,
-                rows: debitsToRows(state.debitClients),
-                onLoaded: (event) {
-                  stateManager = event.stateManager;
-                  stateManager.setShowColumnFilter(true);
+              child: FutureBuilder<List<PlutoRow>>(
+                future: debitsToRows(state.debitClients),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: LoadingWidget());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Erro ao carregar dados'));
+                  }
+                  final rows = snapshot.data ?? [];
+                  return PlutoGrid(
+                    columns: columns,
+                    rows: rows,
+                    onLoaded: (event) {
+                      stateManager = event.stateManager;
+                      stateManager.setShowColumnFilter(true);
+                    },
+                    configuration: const PlutoGridConfiguration(),
+                  );
                 },
-                configuration: const PlutoGridConfiguration(),
               ),
             );
           },
