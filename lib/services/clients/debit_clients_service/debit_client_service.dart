@@ -34,6 +34,41 @@ class DebitClientService {
     await docRef.update({'id': docRef.id});
   }
 
+  /// Add multiple debit clients in a single batch commit so that either all
+  /// documents are written or none are. Useful to avoid partial saves/duplicates.
+  Future<void> addDebitClientsBatch(List<DebitClientModel> debitClients) async {
+    final WriteBatch batch = FirebaseFirestore.instance.batch();
+
+    for (final debit in debitClients) {
+      final docRef = _debitsClientsCollection.doc();
+      final data = debit.toMap();
+      data['id'] = docRef.id;
+      batch.set(docRef, data);
+    }
+
+    await batch.commit();
+  }
+
+  Future<void> deleteDebitsByCpf(String cpfClient) async {
+    Query query = _debitsClientsCollection.where(
+      'cpfClient',
+      isEqualTo: cpfClient,
+    );
+
+    const int pageSize = 400;
+    QuerySnapshot snapshot = await query.limit(pageSize).get();
+
+    while (snapshot.docs.isNotEmpty) {
+      final WriteBatch batch = FirebaseFirestore.instance.batch();
+      for (final doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      snapshot = await query.limit(pageSize).get();
+    }
+  }
+
   Future<String> uploadDocumentAsWebP({
     required Uint8List imageBytes,
     required String cpfClient,

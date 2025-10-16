@@ -131,6 +131,23 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
     ];
   }
 
+  DateTime? _parseDateValue(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is String && value.isNotEmpty) {
+      // Try ISO format first
+      final iso = DateTime.tryParse(value);
+      if (iso != null) return iso;
+      // Try dd/MM/yyyy
+      try {
+        return DateFormat('dd/MM/yyyy').parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   void loadDebits(String cpf) {
     debitCubit.load(DebitClientFilter(cpfClient: cpf));
   }
@@ -196,9 +213,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   void updateDataDebitClientGrid(PlutoRow existingRow) {
     final DateTime? dueDate = form.control('dueDate').value;
     existingRow.cells['value']?.value = form.control('value').value;
-    existingRow.cells['dueDate']?.value = dueDate != null
-        ? DateFormat('dd/MM/yyyy').format(dueDate)
-        : null;
+    existingRow.cells['dueDate']?.value = dueDate;
     existingRow.cells['document']?.value = form.control('document').value;
     stateManager.notifyListeners();
     resetFormAfterChange();
@@ -287,12 +302,24 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
     }
 
     final List<DebitClientDTO> debitsToSave = stateManager.rows.map((row) {
+      final docCell = row.cells['document']?.value;
+      Uint8List? bytes;
+      String? url;
+      if (docCell is Uint8List) {
+        bytes = docCell;
+      } else if (docCell is String && docCell.isNotEmpty) {
+        url = docCell;
+      }
+
       return DebitClientDTO(
         cpfClient: cpfController.text,
         value: row.cells['value']!.value,
-        dueDate: row.cells['dueDate']!.value,
+        dueDate: row.cells['dueDate']!.value is DateTime
+            ? (row.cells['dueDate']!.value as DateTime).toIso8601String()
+            : row.cells['dueDate']!.value?.toString() ?? '',
         dataCreation: DateTime.now(),
-        documentoBytes: row.cells['document']!.value,
+        documentBytes: bytes,
+        documentUrl: url,
       );
     }).toList();
 
@@ -341,6 +368,20 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                                     'O cliente é obrigatório.',
                               },
                               builder: (field) {
+                                // If the caller passed a CPF and we found the client,
+                                // ensure the form control reflects it so validators pass.
+                                if (client != null && field.value == null) {
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    field.didChange(client);
+                                    if (widget.cpfCliente != null &&
+                                        widget.cpfCliente!.isNotEmpty) {
+                                      field.control.markAsDisabled();
+                                    }
+                                  });
+                                }
+
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -477,7 +518,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                         'rowIndex': PlutoCell(value: contador++),
                         'value': PlutoCell(value: debit.value),
                         'dueDate': PlutoCell(
-                          value: DateTime.tryParse(debit.dueDate),
+                          value: _parseDateValue(debit.dueDate),
                         ),
                         'document': PlutoCell(value: debit.documentUrl),
                         'actions': PlutoCell(value: ''),

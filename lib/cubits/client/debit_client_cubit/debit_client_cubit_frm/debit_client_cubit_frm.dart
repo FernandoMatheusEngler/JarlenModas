@@ -16,28 +16,48 @@ class DebitClientPageFrmCubit extends Cubit<DebitClientPageFrmCubitState> {
   ) async {
     try {
       emit(DebitClientPageFrmCubitState(debitClients: [], loading: true));
-      List<DebitClientModel> debitsToSave = [];
+      List<String?> uploadedUrls = List<String?>.filled(
+        debitClients.length,
+        null,
+      );
 
-      for (DebitClientDTO debit in debitClients) {
-        String? documentUrl;
-        if (debit.documentoBytes != null && debit.documentoBytes is Uint8List) {
-          documentUrl = await service.uploadDocumentAsWebP(
-            imageBytes: debit.documentoBytes as Uint8List,
+      for (int i = 0; i < debitClients.length; i++) {
+        final debit = debitClients[i];
+        if (debit.documentBytes != null && debit.documentBytes is Uint8List) {
+          final url = await service.uploadDocumentAsWebP(
+            imageBytes: debit.documentBytes as Uint8List,
             cpfClient: debit.cpfClient,
           );
+          uploadedUrls[i] = url;
+        } else if (debit.documentUrl != null && debit.documentUrl!.isNotEmpty) {
+          uploadedUrls[i] = debit.documentUrl;
+        } else {
+          uploadedUrls[i] = null;
         }
+      }
 
+      List<DebitClientModel> debitsToSave = [];
+      for (int i = 0; i < debitClients.length; i++) {
+        final debit = debitClients[i];
         final debitToSave = DebitClientModel(
           cpfClient: debit.cpfClient,
           value: debit.value,
           dueDate: debit.dueDate,
           dataCreation: debit.dataCreation,
-          documentUrl: documentUrl,
+          documentUrl: uploadedUrls[i],
         );
-
-        service.addDebitClient(debitToSave);
         debitsToSave.add(debitToSave);
       }
+
+      // Remove existing debits for the affected CPF(s) to avoid duplicates.
+      final uniqueCpfs = debitsToSave.map((d) => d.cpfClient).toSet();
+      for (final cpf in uniqueCpfs) {
+        if (cpf.isNotEmpty) {
+          await service.deleteDebitsByCpf(cpf);
+        }
+      }
+
+      await service.addDebitClientsBatch(debitsToSave);
 
       emit(
         DebitClientPageFrmCubitState(

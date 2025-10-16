@@ -5,13 +5,17 @@ class DebitClientDTO {
   final double value;
   final String dueDate;
   final DateTime dataCreation;
-  final Uint8List? documentoBytes;
+  // when creating/updating we can either send raw bytes (new upload)
+  // or keep an existing documentUrl (already uploaded)
+  final Uint8List? documentBytes;
+  final String? documentUrl;
 
   DebitClientDTO({
     required this.cpfClient,
     required this.value,
     required this.dueDate,
     required this.dataCreation,
-    this.documentoBytes,
+    this.documentBytes,
+    this.documentUrl,
   });
 }
