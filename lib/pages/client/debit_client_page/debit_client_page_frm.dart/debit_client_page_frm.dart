@@ -55,6 +55,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       ),
       'dueDate': FormControl<DateTime>(validators: [Validators.required]),
       'document': FormControl<Uint8List>(),
+      'paid': FormControl<bool>(value: false),
     });
 
     columns = createColumnsGrid();
@@ -63,6 +64,50 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
 
   List<PlutoColumn> createColumnsGrid() {
     return [
+      PlutoColumn(
+        title: '',
+        field: 'actions',
+        type: PlutoColumnType.text(),
+        width: 160,
+        enableEditingMode: false,
+        renderer: (rendererContext) {
+          final row = rendererContext.row;
+          final isSaved = row.cells['saved']?.value == true;
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+                onPressed: () {
+                  _editDebit(row);
+                },
+              ),
+              // IconButton(
+              //   icon: Icon(
+              //     isPaid ? Icons.check_box : Icons.check_box_outline_blank,
+              //     color: isPaid ? Colors.green : Colors.grey,
+              //     size: 20,
+              //   ),
+              //   onPressed: () {
+              //     // toggle paid status in the row
+              //     row.cells['paid']?.value =
+              //         !(row.cells['paid']?.value == true);
+              //     stateManager.notifyListeners();
+              //   },
+              // ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                // disable delete if this row corresponds to an already-saved debit
+                onPressed: isSaved
+                    ? null
+                    : () {
+                        _deleteDebit(row);
+                      },
+              ),
+            ],
+          );
+        },
+      ),
       PlutoColumn(
         title: 'Valor',
         field: 'value',
@@ -103,30 +148,24 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         enableEditingMode: false,
       ),
       PlutoColumn(
-        title: 'Ações',
-        field: 'actions',
+        title: 'Quitado',
+        field: 'paid',
         type: PlutoColumnType.text(),
-        width: 120,
-        enableEditingMode: false,
+        readOnly: false,
         renderer: (rendererContext) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                onPressed: () {
-                  _editDebit(rendererContext.row);
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                onPressed: () {
-                  _deleteDebit(rendererContext.row);
-                },
-              ),
-            ],
+          final isPaid = rendererContext.cell.value == true;
+          final isSaved = rendererContext.row.cells['saved']?.value == true;
+          return Checkbox(
+            value: isPaid,
+            onChanged: isSaved
+                ? null
+                : (value) {
+                    rendererContext.row.cells['paid']?.value = value ?? false;
+                    rendererContext.stateManager.notifyListeners();
+                  },
           );
         },
+        enableEditingMode: false,
       ),
     ];
   }
@@ -201,6 +240,8 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         'value': PlutoCell(value: form.control('value').value),
         'dueDate': PlutoCell(value: form.control('dueDate').value),
         'document': PlutoCell(value: form.control('document').value),
+        'paid': PlutoCell(value: form.control('paid').value ?? false),
+        'saved': PlutoCell(value: false),
         'actions': PlutoCell(value: ''),
       },
     );
@@ -214,6 +255,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
     final DateTime? dueDate = form.control('dueDate').value;
     existingRow.cells['value']?.value = form.control('value').value;
     existingRow.cells['dueDate']?.value = dueDate;
+    existingRow.cells['paid']?.value = form.control('paid').value ?? false;
     existingRow.cells['document']?.value = form.control('document').value;
     stateManager.notifyListeners();
     resetFormAfterChange();
@@ -230,7 +272,6 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
   }
 
   ClientModel? _clientValueBeforeDisable;
-
   void changeEnabledClientDropDown(bool enabled) {
     final clientControl = form.control('client');
 
@@ -259,6 +300,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
 
     final documentValue = row.cells['document']?.value;
     Uint8List? documentBytes;
+    final paidValue = row.cells['paid']?.value == true;
 
     if (documentValue is Uint8List) {
       documentBytes = documentValue;
@@ -268,6 +310,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       'value': row.cells['value']?.value,
       'dueDate': parsedDate,
       'document': documentBytes,
+      'paid': paidValue,
     });
 
     setState(() {
@@ -320,6 +363,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         dataCreation: DateTime.now(),
         documentBytes: bytes,
         documentUrl: url,
+        paid: row.cells['paid']?.value == true,
       );
     }).toList();
 
@@ -489,6 +533,17 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                       if (_selectedDocument != null) const SizedBox(width: 5),
                       if (_selectedDocument != null)
                         const Text("Comprovante selecionado"),
+                      const SizedBox(width: 20),
+                      // Use a compact inline checkbox + label instead of CheckboxListTile
+                      // to avoid infinite width issues inside a Row.
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ReactiveCheckbox(formControlName: 'paid'),
+                          const SizedBox(width: 6),
+                          const Text('Quitado'),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -521,6 +576,8 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                           value: _parseDateValue(debit.dueDate),
                         ),
                         'document': PlutoCell(value: debit.documentUrl),
+                        'paid': PlutoCell(value: debit.paid),
+                        'saved': PlutoCell(value: true),
                         'actions': PlutoCell(value: ''),
                       },
                     );
@@ -547,18 +604,26 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                     rowColorCallback: (PlutoRowColorContext rowColorContext) {
                       final dueDateValue =
                           rowColorContext.row.cells['dueDate']?.value;
+                      final isPaid =
+                          rowColorContext.row.cells['paid']?.value == true;
                       DateTime? dueDate;
                       if (dueDateValue is DateTime) {
                         dueDate = dueDateValue;
                       } else if (dueDateValue is String) {
                         dueDate = DateTime.tryParse(dueDateValue);
                       }
+
+                      if (isPaid) {
+                        return Colors.green.withOpacity(0.15);
+                      }
+
                       if (dueDate != null &&
                           dueDate.isBefore(
                             DateTime.now().subtract(const Duration(days: 1)),
                           )) {
-                        return Colors.red;
+                        return Colors.red.withOpacity(0.15);
                       }
+
                       return Colors.transparent;
                     },
                   );

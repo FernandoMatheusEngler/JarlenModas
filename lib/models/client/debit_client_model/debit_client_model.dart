@@ -4,6 +4,7 @@ class DebitClientModel {
   String dueDate;
   DateTime? dataCreation;
   String? documentUrl;
+  bool paid;
 
   DebitClientModel({
     required this.cpfClient,
@@ -11,6 +12,7 @@ class DebitClientModel {
     required this.dueDate,
     required this.dataCreation,
     this.documentUrl,
+    this.paid = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class DebitClientModel {
       'dueDate': dueDate,
       'dataCreation': dataCreation?.toIso8601String(),
       'documentUrl': documentUrl,
+      'paid': paid,
     };
   }
 
@@ -32,6 +35,7 @@ class DebitClientModel {
           ? DateTime.parse(map['dataCreation'])
           : null,
       documentUrl: map['documentUrl'],
+      paid: map['paid'] ?? false,
     );
   }
 }

@@ -100,35 +100,44 @@ class _DebitClientPageContentState extends State<DebitClientPageContent> {
         ),
         readOnly: true,
       ),
+      PlutoColumn(
+        title: 'Valor Total Quitado',
+        field: 'valorTotalQuitado',
+        type: PlutoColumnType.number(
+          applyFormatOnInit: true,
+          format: '#,##0.00',
+        ),
+        readOnly: true,
+      ),
     ];
     refreshList();
   }
 
   Future<List<PlutoRow>> debitsToRows(List<DebitClientModel> debits) async {
-    Map<String, DebitClientModel> debitsByCpf = {};
-
+    Map<String, double> totalByCpf = {};
+    Map<String, double> paidByCpf = {};
     for (final DebitClientModel debit in debits) {
-      if (debitsByCpf.containsKey(debit.cpfClient)) {
-        final DebitClientModel existingDebit = debitsByCpf[debit.cpfClient]!;
-        existingDebit.value += debit.value;
-        debitsByCpf[debit.cpfClient] = existingDebit;
-      } else {
-        debitsByCpf[debit.cpfClient] = debit;
+      totalByCpf[debit.cpfClient] =
+          (totalByCpf[debit.cpfClient] ?? 0) + debit.value;
+      if (debit.paid == true) {
+        paidByCpf[debit.cpfClient] =
+            (paidByCpf[debit.cpfClient] ?? 0) + debit.value;
       }
     }
 
     return Future.wait(
-      debitsByCpf.values.toList().map((debit) async {
-        await clientCubit.load(ClientFilter(cpfClient: debit.cpfClient.trim()));
+      totalByCpf.keys.toList().map((cpf) async {
+        await clientCubit.load(ClientFilter(cpfClient: cpf.trim()));
         ClientModel? client = clientCubit.state.clients
-            .where((element) => element.cpfClient == debit.cpfClient)
+            .where((element) => element.cpfClient == cpf)
             .firstOrNull;
         return PlutoRow(
           cells: {
             'acoes': PlutoCell(value: ''),
-            'cpfClient': PlutoCell(value: debit.cpfClient),
+            'cpfClient': PlutoCell(value: cpf),
             'nome': PlutoCell(value: client?.name ?? ''),
-            'valorTotalDebito': PlutoCell(value: debit.value),
+            'valorTotalDebito': PlutoCell(value: totalByCpf[cpf] ?? 0.0),
+            'valorTotalQuitado': PlutoCell(value: paidByCpf[cpf] ?? 0.0),
           },
         );
       }),

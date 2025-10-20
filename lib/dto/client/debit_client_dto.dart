@@ -9,6 +9,7 @@ class DebitClientDTO {
   // or keep an existing documentUrl (already uploaded)
   final Uint8List? documentBytes;
   final String? documentUrl;
+  final bool paid;
 
   DebitClientDTO({
     required this.cpfClient,
@@ -17,5 +18,6 @@ class DebitClientDTO {
     required this.dataCreation,
     this.documentBytes,
     this.documentUrl,
+    this.paid = false,
   });
 }

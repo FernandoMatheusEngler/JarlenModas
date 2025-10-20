@@ -45,6 +45,7 @@ class DebitClientPageFrmCubit extends Cubit<DebitClientPageFrmCubitState> {
           dueDate: debit.dueDate,
           dataCreation: debit.dataCreation,
           documentUrl: uploadedUrls[i],
+          paid: debit.paid,
         );
         debitsToSave.add(debitToSave);
       }
