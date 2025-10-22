@@ -614,6 +614,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                       }
 
                       if (isPaid) {
+                        // ignore: deprecated_member_use
                         return Colors.green.withOpacity(0.15);
                       }
 
@@ -621,6 +622,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                           dueDate.isBefore(
                             DateTime.now().subtract(const Duration(days: 1)),
                           )) {
+                        // ignore: deprecated_member_use
                         return Colors.red.withOpacity(0.15);
                       }
 
