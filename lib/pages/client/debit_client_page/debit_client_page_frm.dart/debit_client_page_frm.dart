@@ -72,33 +72,21 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         enableEditingMode: false,
         renderer: (rendererContext) {
           final row = rendererContext.row;
-          final isSaved = row.cells['saved']?.value == true;
+          final isPersisted = row.cells['persisted']?.value == true;
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
                 icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-                onPressed: () {
-                  _editDebit(row);
-                },
+                onPressed: isPersisted
+                    ? null
+                    : () {
+                        _editDebit(row);
+                      },
               ),
-              // IconButton(
-              //   icon: Icon(
-              //     isPaid ? Icons.check_box : Icons.check_box_outline_blank,
-              //     color: isPaid ? Colors.green : Colors.grey,
-              //     size: 20,
-              //   ),
-              //   onPressed: () {
-              //     // toggle paid status in the row
-              //     row.cells['paid']?.value =
-              //         !(row.cells['paid']?.value == true);
-              //     stateManager.notifyListeners();
-              //   },
-              // ),
               IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                // disable delete if this row corresponds to an already-saved debit
-                onPressed: isSaved
+                onPressed: isPersisted
                     ? null
                     : () {
                         _deleteDebit(row);
@@ -142,8 +130,25 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         type: PlutoColumnType.text(),
         readOnly: true,
         renderer: (rendererContext) {
-          final hasDocument = rendererContext.cell.value != null;
-          return Text(hasDocument ? "Anexado" : "Nenhum");
+          final doc = rendererContext.cell.value;
+          final hasDocument = doc != null;
+          if (!hasDocument) return const Text('Nenhum');
+
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Anexado'),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.remove_red_eye, size: 18),
+                tooltip: 'Visualizar comprovante',
+                onPressed: () {
+                  // show preview for bytes or URL
+                  _showDocumentPreview(context, doc);
+                },
+              ),
+            ],
+          );
         },
         enableEditingMode: false,
       ),
@@ -154,10 +159,10 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         readOnly: false,
         renderer: (rendererContext) {
           final isPaid = rendererContext.cell.value == true;
-          final isSaved = rendererContext.row.cells['saved']?.value == true;
+          final isLocked = rendererContext.row.cells['saved']?.value == true;
           return Checkbox(
             value: isPaid,
-            onChanged: isSaved
+            onChanged: isLocked
                 ? null
                 : (value) {
                     rendererContext.row.cells['paid']?.value = value ?? false;
@@ -218,6 +223,59 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
     }
   }
 
+  void _showDocumentPreview(BuildContext ctx, dynamic doc) {
+    showDialog<void>(
+      context: ctx,
+      builder: (dialogContext) {
+        Widget content;
+
+        if (doc is Uint8List) {
+          content = InteractiveViewer(
+            child: Image.memory(doc, fit: BoxFit.contain),
+          );
+        } else if (doc is String &&
+            doc.isNotEmpty &&
+            (doc.startsWith('http://') || doc.startsWith('https://'))) {
+          content = InteractiveViewer(
+            child: Image.network(
+              doc,
+              fit: BoxFit.contain,
+              errorBuilder: (c, e, s) =>
+                  const Center(child: Text('Erro ao carregar imagem')),
+            ),
+          );
+        } else {
+          content = const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text('Comprovante não disponível para visualização.'),
+          );
+        }
+
+        return Dialog(
+          child: SizedBox(
+            width: 600,
+            height: 600,
+            child: Column(
+              children: [
+                Expanded(child: Center(child: content)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: const Text('Fechar'),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _addExpenseToGrid() {
     if (!form.valid) {
       form.markAllAsTouched();
@@ -241,6 +299,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
         'dueDate': PlutoCell(value: form.control('dueDate').value),
         'document': PlutoCell(value: form.control('document').value),
         'paid': PlutoCell(value: form.control('paid').value ?? false),
+        'persisted': PlutoCell(value: false),
         'saved': PlutoCell(value: false),
         'actions': PlutoCell(value: ''),
       },
@@ -333,7 +392,7 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
     }
   }
 
-  void _saveDebits() {
+  Future<void> _saveDebits() async {
     if (stateManager.rows.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -367,7 +426,21 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
       );
     }).toList();
 
-    cubit.save(debitsToSave, widget.onSaved);
+    await cubit.save(debitsToSave, widget.onSaved);
+
+    // After a successful save, mark rows as persisted and lock those that are paid.
+    if (cubit.state.saved) {
+      setState(() {
+        for (final row in stateManager.rows) {
+          // mark row as persisted (now exists in backend)
+          row.cells['persisted']?.value = true;
+          final isPaid = row.cells['paid']?.value == true;
+          // lock only the rows that are paid
+          row.cells['saved']?.value = isPaid;
+        }
+        stateManager.notifyListeners();
+      });
+    }
   }
 
   @override
@@ -567,17 +640,45 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   int contador = 0;
-                  final rows = state.debitClients.map((debit) {
+                  final List<dynamic> sorted = List.from(state.debitClients);
+
+                  sorted.sort((a, b) {
+                    final isAPaid = a.paid == true;
+                    final isBPaid = b.paid == true;
+                    final dateA = _parseDateValue(a.dueDate);
+                    final dateB = _parseDateValue(b.dueDate);
+                    final valueA = a.value ?? 0.0;
+                    final valueB = b.value ?? 0.0;
+
+                    if (isAPaid != isBPaid) {
+                      return isAPaid ? 1 : -1;
+                    }
+
+                    if (dateA != null && dateB != null) {
+                      final dateCompare = dateA.compareTo(dateB);
+                      if (dateCompare != 0) {
+                        return dateCompare;
+                      }
+                    } else if (dateA == null && dateB != null) {
+                      return 1;
+                    } else if (dateA != null && dateB == null) {
+                      return -1;
+                    }
+                    return valueB.compareTo(valueA);
+                  });
+
+                  final rows = sorted.map((debit) {
                     return PlutoRow(
                       cells: {
-                        'rowIndex': PlutoCell(value: contador++),
+                        'rowIndex': PlutoCell(value: ++contador),
                         'value': PlutoCell(value: debit.value),
                         'dueDate': PlutoCell(
                           value: _parseDateValue(debit.dueDate),
                         ),
                         'document': PlutoCell(value: debit.documentUrl),
                         'paid': PlutoCell(value: debit.paid),
-                        'saved': PlutoCell(value: true),
+                        'persisted': PlutoCell(value: true),
+                        'saved': PlutoCell(value: debit.paid),
                         'actions': PlutoCell(value: ''),
                       },
                     );
@@ -602,26 +703,19 @@ class _DebitClientPageFrmState extends State<DebitClientPageFrm> {
                     configuration:
                         const PlutoGridConfiguration(), // sem rowColor
                     rowColorCallback: (PlutoRowColorContext rowColorContext) {
-                      final dueDateValue =
-                          rowColorContext.row.cells['dueDate']?.value;
                       final isPaid =
                           rowColorContext.row.cells['paid']?.value == true;
-                      DateTime? dueDate;
-                      if (dueDateValue is DateTime) {
-                        dueDate = dueDateValue;
-                      } else if (dueDateValue is String) {
-                        dueDate = DateTime.tryParse(dueDateValue);
-                      }
+                      final dueDateValue =
+                          rowColorContext.row.cells['dueDate']?.value;
 
                       if (isPaid) {
                         // ignore: deprecated_member_use
                         return Colors.green.withOpacity(0.15);
                       }
-
-                      if (dueDate != null &&
-                          dueDate.isBefore(
-                            DateTime.now().subtract(const Duration(days: 1)),
-                          )) {
+                      final DateTime? dueDate = _parseDateValue(dueDateValue);
+                      final now = DateTime.now();
+                      final today = DateTime(now.year, now.month, now.day);
+                      if (dueDate != null && dueDate.isBefore(today)) {
                         // ignore: deprecated_member_use
                         return Colors.red.withOpacity(0.15);
                       }
